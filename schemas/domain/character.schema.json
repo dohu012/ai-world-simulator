@@ -1,0 +1,186 @@
+{
+  "$defs": {
+    "CharacterId": {
+      "type": "string"
+    },
+    "CharacterStatus": {
+      "enum": [
+        "active",
+        "incapacitated",
+        "missing",
+        "dead",
+        "inactive"
+      ],
+      "title": "CharacterStatus",
+      "type": "string"
+    },
+    "JSONObject": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JSONValue"
+      },
+      "type": "object"
+    },
+    "JSONPrimitive": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "JSONValue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JSONPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "NonNegativeInt": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "OptionalNonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "PositiveInt": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "UnitFloat": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "type": "number"
+    },
+    "WorldId": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Objective character data; beliefs and private memories live elsewhere.",
+  "properties": {
+    "age": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/NonNegativeInt"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "created_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "health": {
+      "$ref": "#/$defs/UnitFloat"
+    },
+    "id": {
+      "$ref": "#/$defs/CharacterId"
+    },
+    "is_special_agent": {
+      "title": "Is Special Agent",
+      "type": "boolean"
+    },
+    "location_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OptionalNonEmptyString"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "name": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "occupation": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Occupation"
+    },
+    "resources": {
+      "$ref": "#/$defs/JSONObject"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "status": {
+      "$ref": "#/$defs/CharacterStatus"
+    },
+    "updated_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "version": {
+      "$ref": "#/$defs/PositiveInt"
+    },
+    "world_id": {
+      "$ref": "#/$defs/WorldId"
+    }
+  },
+  "required": [
+    "id",
+    "world_id",
+    "name",
+    "description",
+    "location_id",
+    "occupation",
+    "age",
+    "status",
+    "is_special_agent",
+    "health",
+    "resources",
+    "version",
+    "schema_version",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "Character",
+  "type": "object"
+}

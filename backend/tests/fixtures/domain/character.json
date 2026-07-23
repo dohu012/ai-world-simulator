@@ -1,0 +1,17 @@
+{
+  "id": "character_001",
+  "world_id": "world_001",
+  "name": "伊莱娜",
+  "description": "灰港的信使。",
+  "location_id": "south_square",
+  "occupation": "courier",
+  "age": 27,
+  "status": "active",
+  "is_special_agent": true,
+  "health": 0.9,
+  "resources": {"coins": 4},
+  "version": 1,
+  "schema_version": "1.0",
+  "created_at": "2026-07-23T08:00:00+08:00",
+  "updated_at": "2026-07-23T12:00:00+08:00"
+}

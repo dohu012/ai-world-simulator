@@ -1,10 +1,26 @@
 # 当前状态
 
-当前阶段：TASK-001
+当前阶段：TASK-003 已完成。
 
-已完成内容：Monorepo 骨架、前后端健康状态页、数据库与 Redis 连接管理、初始迁移、测试与质量工具、开发文档。
+已完成内容：
 
-尚未完成内容：任何世界、角色、Agent、事件、观察、行动或记忆业务功能。
+- TASK-001：工程骨架、FastAPI 后端、Next.js 前端、PostgreSQL/Redis 本地基础设施、Alembic、健康检查、测试与基础文档。
+- TASK-002：World、Character、AgentProfile、WorldFact、AgentBelief、Observation、ActionIntent、ActionResult、WorldEvent、OracleRequest、OracleResponse 的最小领域契约；JSON Schema 稳定导出；TypeScript 类型生成；示例数据和边界校验测试。
+- TASK-003：Architecture Handbook、Development Handbook、AI Collaboration Guide、ADR、Task 系统与长期协作规范。
 
-下一任务建议：在现有分层和迁移体系上，以明确的 TASK-002 领域需求增加首个业务切片。
+尚未完成内容：
 
+- 数据库领域模型、Repository、业务 Service、世界裁定、感知过滤、Agent 决策、Oracle 投递流程及业务 API。
+- World Engine、Observation Builder、Action Validator、Model Gateway、Memory、Scheduler 的业务实现。
+- 生产部署、备份、TLS、可观测性和高可用方案。
+
+TASK-004 开始前必须阅读：
+
+- `docs/architecture-handbook.md`
+- `docs/development-handbook.md`
+- `docs/ai-collaboration-guide.md`
+- `docs/domain-contracts.md`
+- `docs/current-status.md`
+- `docs/known-issues.md`
+- `tasks/TASK_STATUS.md`
+- 未来具体的 TASK-004 文件

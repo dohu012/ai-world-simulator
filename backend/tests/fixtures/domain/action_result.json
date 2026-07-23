@@ -1,0 +1,16 @@
+{
+  "id": "result_001",
+  "world_id": "world_001",
+  "action_id": "action_001",
+  "actor_id": "character_001",
+  "status": "failed",
+  "started_at": "2026-07-23T12:01:00+08:00",
+  "completed_at": "2026-07-23T12:02:00+08:00",
+  "failure_code": "path_blocked",
+  "failure_reason": "通往北门的道路已封锁。",
+  "state_changes": [],
+  "generated_event_ids": ["event_002"],
+  "witness_character_ids": ["character_001"],
+  "correlation_id": "decision_001",
+  "schema_version": "1.0"
+}

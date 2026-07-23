@@ -1,0 +1,10 @@
+{
+  "id": "oracle_response_001",
+  "request_id": "oracle_request_001",
+  "world_id": "world_001",
+  "agent_id": "character_001",
+  "content": "留意旧钟楼附近的狭窄通道。",
+  "clarity": 0.8,
+  "responded_at": "2026-07-23T12:05:00+08:00",
+  "schema_version": "1.0"
+}

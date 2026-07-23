@@ -1,0 +1,102 @@
+{
+  "$defs": {
+    "CharacterId": {
+      "type": "string"
+    },
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "OracleRequestStatus": {
+      "enum": [
+        "pending",
+        "answered",
+        "expired",
+        "cancelled",
+        "resolved"
+      ],
+      "title": "OracleRequestStatus",
+      "type": "string"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "WorldId": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "An agent's request for player-provided information.",
+  "properties": {
+    "agent_id": {
+      "$ref": "#/$defs/CharacterId"
+    },
+    "context_summary": {
+      "title": "Context Summary",
+      "type": "string"
+    },
+    "decision_correlation_id": {
+      "title": "Decision Correlation Id",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "question": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "real_deadline": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Timestamp"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "requested_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "status": {
+      "$ref": "#/$defs/OracleRequestStatus"
+    },
+    "world_deadline": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Timestamp"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "world_id": {
+      "$ref": "#/$defs/WorldId"
+    }
+  },
+  "required": [
+    "id",
+    "world_id",
+    "agent_id",
+    "question",
+    "context_summary",
+    "requested_at",
+    "world_deadline",
+    "real_deadline",
+    "status",
+    "decision_correlation_id",
+    "schema_version"
+  ],
+  "title": "OracleRequest",
+  "type": "object"
+}

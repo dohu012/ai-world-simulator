@@ -1,0 +1,13 @@
+{
+  "id": "oracle_request_001",
+  "world_id": "world_001",
+  "agent_id": "character_001",
+  "question": "我应该继续寻找通往北门的路吗？",
+  "context_summary": "伊莱娜发现道路受阻，但仍需完成送信。",
+  "requested_at": "2026-07-23T12:03:00+08:00",
+  "world_deadline": "2026-07-23T12:10:00+08:00",
+  "real_deadline": "2026-07-23T12:08:00+08:00",
+  "status": "pending",
+  "decision_correlation_id": "decision_002",
+  "schema_version": "1.0"
+}

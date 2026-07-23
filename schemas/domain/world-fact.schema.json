@@ -1,0 +1,147 @@
+{
+  "$defs": {
+    "EventId": {
+      "type": "string"
+    },
+    "FactId": {
+      "type": "string"
+    },
+    "FactVisibility": {
+      "enum": [
+        "public",
+        "restricted",
+        "secret",
+        "private"
+      ],
+      "title": "FactVisibility",
+      "type": "string"
+    },
+    "JSONPrimitive": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "JSONValue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JSONPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "PositiveInt": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "WorldId": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "An objective proposition in world state, independent of any agent belief.",
+  "properties": {
+    "created_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "id": {
+      "$ref": "#/$defs/FactId"
+    },
+    "object": {
+      "$ref": "#/$defs/JSONValue"
+    },
+    "predicate": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "source_event_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EventId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "subject": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "valid_from": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "valid_until": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Timestamp"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "version": {
+      "$ref": "#/$defs/PositiveInt"
+    },
+    "visibility": {
+      "$ref": "#/$defs/FactVisibility"
+    },
+    "world_id": {
+      "$ref": "#/$defs/WorldId"
+    }
+  },
+  "required": [
+    "id",
+    "world_id",
+    "subject",
+    "predicate",
+    "object",
+    "valid_from",
+    "valid_until",
+    "visibility",
+    "source_event_id",
+    "version",
+    "schema_version",
+    "created_at"
+  ],
+  "title": "WorldFact",
+  "type": "object"
+}

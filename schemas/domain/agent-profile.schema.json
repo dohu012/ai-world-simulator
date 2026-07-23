@@ -1,0 +1,148 @@
+{
+  "$defs": {
+    "CharacterId": {
+      "type": "string"
+    },
+    "JSONObject": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JSONValue"
+      },
+      "type": "object"
+    },
+    "JSONPrimitive": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "JSONValue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JSONPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "UnitFloat": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "type": "number"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Stable decision configuration for a special character.",
+  "properties": {
+    "abilities": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Abilities",
+      "type": "array"
+    },
+    "character_id": {
+      "$ref": "#/$defs/CharacterId"
+    },
+    "decision_biases": {
+      "additionalProperties": {
+        "$ref": "#/$defs/UnitFloat"
+      },
+      "title": "Decision Biases",
+      "type": "object"
+    },
+    "desires": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Desires",
+      "type": "array"
+    },
+    "fears": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Fears",
+      "type": "array"
+    },
+    "oracle_relationship": {
+      "$ref": "#/$defs/JSONObject"
+    },
+    "persona_summary": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "taboos": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Taboos",
+      "type": "array"
+    },
+    "traits": {
+      "additionalProperties": {
+        "$ref": "#/$defs/UnitFloat"
+      },
+      "title": "Traits",
+      "type": "object"
+    },
+    "values": {
+      "additionalProperties": {
+        "$ref": "#/$defs/UnitFloat"
+      },
+      "title": "Values",
+      "type": "object"
+    },
+    "wake_policy": {
+      "$ref": "#/$defs/JSONObject"
+    }
+  },
+  "required": [
+    "character_id",
+    "persona_summary",
+    "traits",
+    "values",
+    "desires",
+    "fears",
+    "taboos",
+    "abilities",
+    "decision_biases",
+    "oracle_relationship",
+    "wake_policy",
+    "schema_version"
+  ],
+  "title": "AgentProfile",
+  "type": "object"
+}

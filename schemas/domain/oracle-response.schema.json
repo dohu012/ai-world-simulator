@@ -1,0 +1,69 @@
+{
+  "$defs": {
+    "CharacterId": {
+      "type": "string"
+    },
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "UnitFloat": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "type": "number"
+    },
+    "WorldId": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Player-provided information that may later become an observation.",
+  "properties": {
+    "agent_id": {
+      "$ref": "#/$defs/CharacterId"
+    },
+    "clarity": {
+      "$ref": "#/$defs/UnitFloat"
+    },
+    "content": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "request_id": {
+      "title": "Request Id",
+      "type": "string"
+    },
+    "responded_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "world_id": {
+      "$ref": "#/$defs/WorldId"
+    }
+  },
+  "required": [
+    "id",
+    "request_id",
+    "world_id",
+    "agent_id",
+    "content",
+    "clarity",
+    "responded_at",
+    "schema_version"
+  ],
+  "title": "OracleResponse",
+  "type": "object"
+}

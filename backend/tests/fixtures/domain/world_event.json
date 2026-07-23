@@ -1,0 +1,17 @@
+{
+  "id": "event_001",
+  "world_id": "world_001",
+  "event_type": "state_changed",
+  "title": "北门关闭",
+  "description": "守卫关闭了灰港北门。",
+  "occurred_at": "2026-07-23T11:55:00+08:00",
+  "location_id": "north_gate",
+  "participant_ids": [],
+  "fact_ids": ["fact_001"],
+  "source_action_id": null,
+  "visibility": "restricted",
+  "correlation_id": "gate_cycle_001",
+  "metadata": {"cause": "curfew"},
+  "schema_version": "1.0",
+  "created_at": "2026-07-23T11:55:00+08:00"
+}

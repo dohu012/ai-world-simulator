@@ -1,6 +1,7 @@
 # AI 世界观察与干预模拟器
 
-纯文字 AI 世界模拟产品的工程骨架。当前阶段仅包含前后端通信、健康检查、PostgreSQL/Redis 基础设施和工程工具，不包含世界、角色、Agent、事件或记忆业务逻辑。
+纯文字 AI 世界模拟产品。当前已完成前后端工程骨架与第一版最小领域公共契约；尚未实现
+领域持久化、世界裁定、感知过滤、Agent 决策或模型调用。
 
 ## 技术栈与环境
 
@@ -47,8 +48,11 @@ python -m pytest
 python -m ruff check .
 python -m ruff format --check .
 python -m mypy app
+python -m app.domain.export_schemas
 
 cd ..\frontend
+npm run generate:domain-types
+npm run typecheck
 npm run lint
 npm run format:check
 npm run test
@@ -57,10 +61,14 @@ npm run build
 
 创建迁移：`python -m alembic revision --autogenerate -m "description"`，随后检查脚本并执行升级。检查模型与迁移是否一致：`python -m alembic check`。
 
+领域模型位于 `backend/app/domain/`，契约说明见
+[`docs/domain-contracts.md`](docs/domain-contracts.md)。Python 是契约唯一来源；导出的
+JSON Schema 位于 `schemas/domain/`，生成的前端声明位于
+`frontend/src/types/generated/`，前端统一从 `frontend/src/types/domain` 导入。
+
 ## 常见问题
 
 - `/health/ready` 返回 503：确认 Compose 服务健康、`.env` 地址正确且迁移已执行。
 - 浏览器请求失败：确认后端端口和 `NEXT_PUBLIC_API_BASE_URL` 一致，并在 `CORS_ORIGINS` 中允许前端来源。
 - 端口冲突：修改 Compose 端口映射，并同步修改连接 URL。
 - Windows 上没有 `make`：直接使用上述 PowerShell/npm/Python 命令。
-

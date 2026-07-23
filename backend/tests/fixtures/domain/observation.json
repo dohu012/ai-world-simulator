@@ -1,0 +1,29 @@
+{
+  "id": "observation_001",
+  "world_id": "world_001",
+  "agent_id": "character_001",
+  "observed_at": "2026-07-23T12:00:00+08:00",
+  "observation_type": "mixed",
+  "source_event_id": "event_001",
+  "source_message_id": null,
+  "visible_entities": [
+    {
+      "entity": {"entity_type": "gate", "entity_id": "north_gate"},
+      "name": "北门",
+      "description": "远处似乎落下了闸门。",
+      "attributes": {"distance": "far"}
+    }
+  ],
+  "heard_statements": [{"speaker_id": null, "content": "北门关闭了！"}],
+  "received_messages": [],
+  "felt_changes": [{"description": "城墙方向传来震动", "intensity": 0.3}],
+  "available_actions": [
+    {
+      "action_type": "move",
+      "description": "尝试前往北门",
+      "parameter_hints": {"destination_id": "north_gate"}
+    }
+  ],
+  "metadata": {"perception_range": "local"},
+  "schema_version": "1.0"
+}

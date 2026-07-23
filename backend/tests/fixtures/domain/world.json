@@ -1,0 +1,12 @@
+{
+  "id": "world_001",
+  "name": "灰港",
+  "description": "一座被雾包围的港城。",
+  "status": "running",
+  "current_time": "2026-07-23T12:00:00+08:00",
+  "time_scale": 1.0,
+  "version": 1,
+  "schema_version": "1.0",
+  "created_at": "2026-07-23T08:00:00+08:00",
+  "updated_at": "2026-07-23T12:00:00+08:00"
+}

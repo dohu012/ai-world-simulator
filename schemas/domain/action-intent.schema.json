@@ -1,0 +1,139 @@
+{
+  "$defs": {
+    "ActionId": {
+      "type": "string"
+    },
+    "ActionType": {
+      "enum": [
+        "move",
+        "speak",
+        "wait",
+        "custom"
+      ],
+      "title": "ActionType",
+      "type": "string"
+    },
+    "CharacterId": {
+      "type": "string"
+    },
+    "JSONObject": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JSONValue"
+      },
+      "type": "object"
+    },
+    "JSONPrimitive": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "JSONValue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JSONPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "NonNegativeFloat": {
+      "minimum": 0.0,
+      "type": "number"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "WorldId": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "An agent's request to attempt an action; it makes no success claim.",
+  "properties": {
+    "action_type": {
+      "$ref": "#/$defs/ActionType"
+    },
+    "actor_id": {
+      "$ref": "#/$defs/CharacterId"
+    },
+    "correlation_id": {
+      "title": "Correlation Id",
+      "type": "string"
+    },
+    "expected_duration": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/NonNegativeFloat"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "id": {
+      "$ref": "#/$defs/ActionId"
+    },
+    "parameters": {
+      "$ref": "#/$defs/JSONObject"
+    },
+    "reason_summary": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "submitted_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "world_id": {
+      "$ref": "#/$defs/WorldId"
+    }
+  },
+  "required": [
+    "id",
+    "world_id",
+    "actor_id",
+    "action_type",
+    "parameters",
+    "reason_summary",
+    "submitted_at",
+    "expected_duration",
+    "correlation_id",
+    "schema_version"
+  ],
+  "title": "ActionIntent",
+  "type": "object"
+}

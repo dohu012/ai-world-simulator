@@ -1,0 +1,208 @@
+{
+  "$defs": {
+    "ActionId": {
+      "type": "string"
+    },
+    "ActionStatus": {
+      "enum": [
+        "accepted",
+        "succeeded",
+        "failed",
+        "rejected",
+        "cancelled"
+      ],
+      "title": "ActionStatus",
+      "type": "string"
+    },
+    "CharacterId": {
+      "type": "string"
+    },
+    "EventId": {
+      "type": "string"
+    },
+    "JSONPrimitive": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "JSONValue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JSONPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "StateChange": {
+      "additionalProperties": false,
+      "description": "A single field-level change produced by world adjudication.",
+      "properties": {
+        "entity_id": {
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "entity_type": {
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "field": {
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "new_value": {
+          "$ref": "#/$defs/JSONValue"
+        },
+        "old_value": {
+          "$ref": "#/$defs/JSONValue"
+        }
+      },
+      "required": [
+        "entity_type",
+        "entity_id",
+        "field",
+        "old_value",
+        "new_value"
+      ],
+      "title": "StateChange",
+      "type": "object"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "WorldId": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The world adjudicator's outcome for an action intent.",
+  "properties": {
+    "action_id": {
+      "$ref": "#/$defs/ActionId"
+    },
+    "actor_id": {
+      "$ref": "#/$defs/CharacterId"
+    },
+    "completed_at": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Timestamp"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "correlation_id": {
+      "title": "Correlation Id",
+      "type": "string"
+    },
+    "failure_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Failure Code"
+    },
+    "failure_reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Failure Reason"
+    },
+    "generated_event_ids": {
+      "items": {
+        "$ref": "#/$defs/EventId"
+      },
+      "title": "Generated Event Ids",
+      "type": "array"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "started_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "state_changes": {
+      "items": {
+        "$ref": "#/$defs/StateChange"
+      },
+      "title": "State Changes",
+      "type": "array"
+    },
+    "status": {
+      "$ref": "#/$defs/ActionStatus"
+    },
+    "witness_character_ids": {
+      "items": {
+        "$ref": "#/$defs/CharacterId"
+      },
+      "title": "Witness Character Ids",
+      "type": "array"
+    },
+    "world_id": {
+      "$ref": "#/$defs/WorldId"
+    }
+  },
+  "required": [
+    "id",
+    "world_id",
+    "action_id",
+    "actor_id",
+    "status",
+    "started_at",
+    "completed_at",
+    "failure_code",
+    "failure_reason",
+    "state_changes",
+    "generated_event_ids",
+    "witness_character_ids",
+    "correlation_id",
+    "schema_version"
+  ],
+  "title": "ActionResult",
+  "type": "object"
+}

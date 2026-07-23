@@ -1,0 +1,12 @@
+{
+  "id": "action_001",
+  "world_id": "world_001",
+  "actor_id": "character_001",
+  "action_type": "move",
+  "parameters": {"destination_id": "north_gate"},
+  "reason_summary": "前往北门确认道路情况。",
+  "submitted_at": "2026-07-23T12:01:00+08:00",
+  "expected_duration": 300.0,
+  "correlation_id": "decision_001",
+  "schema_version": "1.0"
+}

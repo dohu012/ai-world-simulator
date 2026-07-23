@@ -1,0 +1,14 @@
+{
+  "id": "fact_001",
+  "world_id": "world_001",
+  "subject": "north_gate",
+  "predicate": "status",
+  "object": "closed",
+  "valid_from": "2026-07-23T11:55:00+08:00",
+  "valid_until": null,
+  "visibility": "restricted",
+  "source_event_id": "event_001",
+  "version": 1,
+  "schema_version": "1.0",
+  "created_at": "2026-07-23T11:55:00+08:00"
+}

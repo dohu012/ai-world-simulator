@@ -1,0 +1,187 @@
+{
+  "$defs": {
+    "ActionId": {
+      "type": "string"
+    },
+    "CharacterId": {
+      "type": "string"
+    },
+    "EventType": {
+      "enum": [
+        "state_changed",
+        "movement",
+        "speech",
+        "scheduled_event",
+        "system"
+      ],
+      "title": "EventType",
+      "type": "string"
+    },
+    "FactId": {
+      "type": "string"
+    },
+    "FactVisibility": {
+      "enum": [
+        "public",
+        "restricted",
+        "secret",
+        "private"
+      ],
+      "title": "FactVisibility",
+      "type": "string"
+    },
+    "JSONObject": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JSONValue"
+      },
+      "type": "object"
+    },
+    "JSONPrimitive": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "JSONValue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JSONPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "WorldId": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "An occurrence that has happened in the objective world.",
+  "properties": {
+    "correlation_id": {
+      "title": "Correlation Id",
+      "type": "string"
+    },
+    "created_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "event_type": {
+      "$ref": "#/$defs/EventType"
+    },
+    "fact_ids": {
+      "items": {
+        "$ref": "#/$defs/FactId"
+      },
+      "title": "Fact Ids",
+      "type": "array"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "location_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Location Id"
+    },
+    "metadata": {
+      "$ref": "#/$defs/JSONObject"
+    },
+    "occurred_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "participant_ids": {
+      "items": {
+        "$ref": "#/$defs/CharacterId"
+      },
+      "title": "Participant Ids",
+      "type": "array"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "source_action_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ActionId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "title": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "visibility": {
+      "$ref": "#/$defs/FactVisibility"
+    },
+    "world_id": {
+      "$ref": "#/$defs/WorldId"
+    }
+  },
+  "required": [
+    "id",
+    "world_id",
+    "event_type",
+    "title",
+    "description",
+    "occurred_at",
+    "location_id",
+    "participant_ids",
+    "fact_ids",
+    "source_action_id",
+    "visibility",
+    "correlation_id",
+    "metadata",
+    "schema_version",
+    "created_at"
+  ],
+  "title": "WorldEvent",
+  "type": "object"
+}

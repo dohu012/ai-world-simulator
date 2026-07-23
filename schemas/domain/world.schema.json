@@ -1,0 +1,87 @@
+{
+  "$defs": {
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "PositiveFloat": {
+      "exclusiveMinimum": 0.0,
+      "type": "number"
+    },
+    "PositiveInt": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "WorldId": {
+      "type": "string"
+    },
+    "WorldStatus": {
+      "enum": [
+        "draft",
+        "running",
+        "paused",
+        "completed",
+        "archived"
+      ],
+      "title": "WorldStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Objective top-level metadata and clock for one simulated world.",
+  "properties": {
+    "created_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "current_time": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "id": {
+      "$ref": "#/$defs/WorldId"
+    },
+    "name": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "status": {
+      "$ref": "#/$defs/WorldStatus"
+    },
+    "time_scale": {
+      "$ref": "#/$defs/PositiveFloat"
+    },
+    "updated_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "version": {
+      "$ref": "#/$defs/PositiveInt"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "description",
+    "status",
+    "current_time",
+    "time_scale",
+    "version",
+    "schema_version",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "World",
+  "type": "object"
+}

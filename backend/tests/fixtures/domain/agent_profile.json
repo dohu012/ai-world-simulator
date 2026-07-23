@@ -1,0 +1,14 @@
+{
+  "character_id": "character_001",
+  "persona_summary": "谨慎但执着的信使。",
+  "traits": {"cautious": 0.8},
+  "values": {"duty": 0.9},
+  "desires": ["完成送信"],
+  "fears": ["被困在城外"],
+  "taboos": ["伤害平民"],
+  "abilities": ["辨认道路"],
+  "decision_biases": {"risk_aversion": 0.7},
+  "oracle_relationship": {"trust": "uncertain"},
+  "wake_policy": {"on_new_observation": true},
+  "schema_version": "1.0"
+}

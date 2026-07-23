@@ -1,0 +1,142 @@
+{
+  "$defs": {
+    "BeliefSourceType": {
+      "enum": [
+        "observation",
+        "message",
+        "memory",
+        "inference",
+        "oracle",
+        "unknown"
+      ],
+      "title": "BeliefSourceType",
+      "type": "string"
+    },
+    "CharacterId": {
+      "type": "string"
+    },
+    "JSONPrimitive": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "JSONValue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JSONPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "UnitFloat": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "type": "number"
+    },
+    "WorldId": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A fallible subjective proposition held by one agent.",
+  "properties": {
+    "agent_id": {
+      "$ref": "#/$defs/CharacterId"
+    },
+    "confidence": {
+      "$ref": "#/$defs/UnitFloat"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "last_updated_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "learned_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "object": {
+      "$ref": "#/$defs/JSONValue"
+    },
+    "predicate": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "source_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Source Id"
+    },
+    "source_type": {
+      "$ref": "#/$defs/BeliefSourceType"
+    },
+    "subject": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "world_id": {
+      "$ref": "#/$defs/WorldId"
+    }
+  },
+  "required": [
+    "id",
+    "world_id",
+    "agent_id",
+    "subject",
+    "predicate",
+    "object",
+    "confidence",
+    "source_type",
+    "source_id",
+    "learned_at",
+    "last_updated_at",
+    "schema_version"
+  ],
+  "title": "AgentBelief",
+  "type": "object"
+}

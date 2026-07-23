@@ -1,0 +1,349 @@
+{
+  "$defs": {
+    "ActionType": {
+      "enum": [
+        "move",
+        "speak",
+        "wait",
+        "custom"
+      ],
+      "title": "ActionType",
+      "type": "string"
+    },
+    "AvailableAction": {
+      "additionalProperties": false,
+      "description": "An action affordance exposed to the agent, not an action result.",
+      "properties": {
+        "action_type": {
+          "$ref": "#/$defs/ActionType"
+        },
+        "description": {
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "parameter_hints": {
+          "$ref": "#/$defs/JSONObject"
+        }
+      },
+      "required": [
+        "action_type",
+        "description",
+        "parameter_hints"
+      ],
+      "title": "AvailableAction",
+      "type": "object"
+    },
+    "CharacterId": {
+      "type": "string"
+    },
+    "EntityReference": {
+      "additionalProperties": false,
+      "description": "A lightweight reference to a domain entity.",
+      "properties": {
+        "entity_id": {
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "entity_type": {
+          "$ref": "#/$defs/NonEmptyString"
+        }
+      },
+      "required": [
+        "entity_type",
+        "entity_id"
+      ],
+      "title": "EntityReference",
+      "type": "object"
+    },
+    "EventId": {
+      "type": "string"
+    },
+    "FeltChange": {
+      "additionalProperties": false,
+      "description": "A local, possibly imprecise sensation of change.",
+      "properties": {
+        "description": {
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "intensity": {
+          "$ref": "#/$defs/UnitFloat"
+        }
+      },
+      "required": [
+        "description",
+        "intensity"
+      ],
+      "title": "FeltChange",
+      "type": "object"
+    },
+    "HeardStatement": {
+      "additionalProperties": false,
+      "description": "A statement heard by the agent, without asserting its truth.",
+      "properties": {
+        "content": {
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "speaker_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CharacterId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "speaker_id",
+        "content"
+      ],
+      "title": "HeardStatement",
+      "type": "object"
+    },
+    "JSONObject": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JSONValue"
+      },
+      "type": "object"
+    },
+    "JSONPrimitive": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "JSONValue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JSONPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "ObservationId": {
+      "type": "string"
+    },
+    "ObservationType": {
+      "enum": [
+        "visual",
+        "auditory",
+        "message",
+        "oracle",
+        "mixed",
+        "internal"
+      ],
+      "title": "ObservationType",
+      "type": "string"
+    },
+    "ObservedEntity": {
+      "additionalProperties": false,
+      "description": "A partial entity view visible to the observing agent.",
+      "properties": {
+        "attributes": {
+          "$ref": "#/$defs/JSONObject"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Description"
+        },
+        "entity": {
+          "$ref": "#/$defs/EntityReference"
+        },
+        "name": {
+          "$ref": "#/$defs/NonEmptyString"
+        }
+      },
+      "required": [
+        "entity",
+        "name",
+        "description",
+        "attributes"
+      ],
+      "title": "ObservedEntity",
+      "type": "object"
+    },
+    "ReceivedMessage": {
+      "additionalProperties": false,
+      "description": "A message delivered to the agent.",
+      "properties": {
+        "content": {
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "message_id": {
+          "title": "Message Id",
+          "type": "string"
+        },
+        "sender_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CharacterId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sent_at": {
+          "$ref": "#/$defs/Timestamp"
+        }
+      },
+      "required": [
+        "message_id",
+        "sender_id",
+        "content",
+        "sent_at"
+      ],
+      "title": "ReceivedMessage",
+      "type": "object"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "UnitFloat": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "type": "number"
+    },
+    "WorldId": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Only the local information made available to a particular agent.",
+  "properties": {
+    "agent_id": {
+      "$ref": "#/$defs/CharacterId"
+    },
+    "available_actions": {
+      "items": {
+        "$ref": "#/$defs/AvailableAction"
+      },
+      "title": "Available Actions",
+      "type": "array"
+    },
+    "felt_changes": {
+      "items": {
+        "$ref": "#/$defs/FeltChange"
+      },
+      "title": "Felt Changes",
+      "type": "array"
+    },
+    "heard_statements": {
+      "items": {
+        "$ref": "#/$defs/HeardStatement"
+      },
+      "title": "Heard Statements",
+      "type": "array"
+    },
+    "id": {
+      "$ref": "#/$defs/ObservationId"
+    },
+    "metadata": {
+      "$ref": "#/$defs/JSONObject"
+    },
+    "observation_type": {
+      "$ref": "#/$defs/ObservationType"
+    },
+    "observed_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "received_messages": {
+      "items": {
+        "$ref": "#/$defs/ReceivedMessage"
+      },
+      "title": "Received Messages",
+      "type": "array"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "source_event_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EventId"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source_message_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Source Message Id"
+    },
+    "visible_entities": {
+      "items": {
+        "$ref": "#/$defs/ObservedEntity"
+      },
+      "title": "Visible Entities",
+      "type": "array"
+    },
+    "world_id": {
+      "$ref": "#/$defs/WorldId"
+    }
+  },
+  "required": [
+    "id",
+    "world_id",
+    "agent_id",
+    "observed_at",
+    "observation_type",
+    "source_event_id",
+    "source_message_id",
+    "visible_entities",
+    "heard_statements",
+    "received_messages",
+    "felt_changes",
+    "available_actions",
+    "metadata",
+    "schema_version"
+  ],
+  "title": "Observation",
+  "type": "object"
+}
