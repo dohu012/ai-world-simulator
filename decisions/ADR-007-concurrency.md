@@ -27,3 +27,7 @@ Future tasks must define idempotency keys or unique constraints for scheduled an
 ## Future Changes
 
 When distributed workers are introduced, update this ADR with lock, queue, and retry semantics.
+
+## TASK-015 refinement (2026-07-26)
+
+State-changing Gray Harbor actions acquire `SELECT ... FOR UPDATE` on the single `worlds` row before reading mutation state. This is the per-world serialization boundary; lock order is world row, state/topology reads, objective updates, then append records. Client character/world versions are domain preconditions. Same-key retries return the first lifecycle. Lock timeout, deadlock, and serialization failures are operational failures and must roll back rather than create fictional rejected actions. Advisory locks and a new event-sourcing dependency were rejected because the durable world row and current SQLAlchemy/PostgreSQL transaction already provide the required boundary.

@@ -1,13 +1,33 @@
+import { DemoAgentInputFeed } from "@/features/demo-world/demo-agent-input-feed";
+import { DemoWorldObserver } from "@/features/demo-world/demo-world-observer";
+import { DemoAgentPreview } from "@/features/demo-world/demo-agent-preview";
+import { ReplayInspector } from "@/features/demo-world/replay-inspector";
 import { HealthDashboard } from "@/features/health/health-dashboard";
 
 export default function Home() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
-      <p className="text-sm uppercase tracking-[0.25em] text-cyan-300">
-        Development Environment
-      </p>
-      <h1 className="mt-3 text-4xl font-semibold">AI 世界观察与干预模拟器</h1>
-      <HealthDashboard />
+    <main className="mx-auto max-w-7xl px-5 py-8 sm:px-6 lg:px-8">
+      <DemoWorldObserver />
+      <div className="mt-6">
+        <ReplayInspector />
+      </div>
+      <div className="mt-6">
+        <DemoAgentPreview />
+      </div>
+      <div className="mt-6">
+        <DemoAgentInputFeed />
+      </div>
+      <section className="mt-6 rounded-lg border border-slate-700 bg-slate-900/80 p-5">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+            System Health
+          </p>
+          <h2 className="mt-1 text-lg font-semibold text-slate-50">
+            开发环境健康检查
+          </h2>
+        </div>
+        <HealthDashboard />
+      </section>
     </main>
   );
 }

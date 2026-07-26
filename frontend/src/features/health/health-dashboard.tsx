@@ -36,7 +36,7 @@ export function HealthDashboard() {
   });
 
   return (
-    <div className="mt-10 grid gap-4 sm:grid-cols-3">
+    <div className="mt-5 grid gap-4 sm:grid-cols-3">
       <StatusCard label="前端运行状态" loading={false} error={false} success />
       <StatusCard
         label="后端健康状态"

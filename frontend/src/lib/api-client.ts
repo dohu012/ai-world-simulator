@@ -1,7 +1,6 @@
 import type { ApiErrorBody } from "@/types/api";
 
-const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
 
 export class ApiClientError extends Error {
   constructor(
@@ -14,19 +13,50 @@ export class ApiClientError extends Error {
   }
 }
 
-export async function apiGet<T>(path: string): Promise<T> {
+interface ApiGetOptions {
+  headers?: HeadersInit;
+}
+
+async function readResponseBody(response: Response): Promise<unknown> {
+  // Some test/service-worker response doubles expose json() without text().
+  if (typeof response.text !== "function") return response.json();
+  const text = await response.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    if (!response.ok) return text;
+    throw new ApiClientError(
+      "API returned an invalid response.",
+      response.status,
+      "INVALID_API_RESPONSE",
+      { contentType: response.headers.get("content-type") },
+    );
+  }
+}
+
+export async function apiGet<T>(
+  path: string,
+  options: ApiGetOptions = {},
+): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
-    headers: { Accept: "application/json" },
+    headers: { Accept: "application/json", ...options.headers },
   });
-  const body: unknown = await response.json();
+  const body = await readResponseBody(response);
 
   if (!response.ok) {
-    const errorBody = body as Partial<ApiErrorBody>;
+    const errorBody =
+      typeof body === "object" && body !== null
+        ? (body as Partial<ApiErrorBody>)
+        : undefined;
     throw new ApiClientError(
-      errorBody.error?.message ?? "API request failed",
+      errorBody?.error?.message ??
+        (response.status >= 500
+          ? "Backend service is temporarily unavailable."
+          : "API request failed."),
       response.status,
-      errorBody.error?.code ?? "UNKNOWN_ERROR",
-      errorBody.error?.details ?? null,
+      errorBody?.error?.code ?? "HTTP_ERROR",
+      errorBody?.error?.details ?? null,
     );
   }
   return body as T;

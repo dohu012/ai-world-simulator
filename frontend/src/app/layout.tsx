@@ -5,7 +5,7 @@ import "@/app/globals.css";
 
 export const metadata: Metadata = {
   title: "AI 世界观察与干预模拟器",
-  description: "Development environment status",
+  description: "固定世界观察台静态演示",
 };
 
 export default function RootLayout({

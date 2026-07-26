@@ -5,7 +5,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.errors import register_exception_handlers
+from app.api.routes.demo_world import router as demo_world_router
 from app.api.routes.health import router as health_router
+from app.api.routes.persistent_world import router as persistent_world_router
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
 from app.core.middleware import request_logging_middleware
@@ -35,6 +37,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["*"],
     )
     app.middleware("http")(request_logging_middleware)
+    app.include_router(demo_world_router)
+    app.include_router(persistent_world_router)
     app.include_router(health_router)
     register_exception_handlers(app)
     return app

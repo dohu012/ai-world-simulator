@@ -22,3 +22,7 @@ class SystemMetadata(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
+
+
+# Import mapped classes so Alembic's Base.metadata sees the business tables.
+from app.infrastructure.database import models as _models  # noqa: E402, F401

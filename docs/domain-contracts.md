@@ -70,3 +70,38 @@ npm run typecheck
 
 修改 Python 契约后，必须依次重新导出 Schema、重新生成 TypeScript，并运行后端测试与
 `npm run typecheck`。生成文件和 Schema 都纳入版本控制，以便代码审查契约差异。
+## TASK-005 Demo Read Model
+
+`GET /demo/worlds/gray-harbor` returns an HTTP read model composed from existing domain contracts: `World`, `Character`, `AgentProfile`, `WorldEvent`, `Observation`, `AgentBelief`, `OracleRequest`, `OracleResponse`, `ActionIntent`, and `ActionResult`.
+
+This read model is for the observer UI only. It does not make the frontend an authority over hidden facts, does not merge objective events with subjective observations or beliefs, and does not change the domain contract source of truth.
+
+## TASK-006 Agent Perspective Read Model
+
+`GET /demo/worlds/gray-harbor/agents/{agent_id}/perspective` returns a narrow HTTP read model for one fixed demo character. It contains a world summary (`id`, `name`, `current_time`, `schema_version`, `version`), that character, that character's `AgentProfile`, and only records locally addressed to that agent: `Observation`, `AgentBelief`, `OracleRequest`, `OracleResponse`, `ActionIntent`, and `ActionResult`.
+
+This endpoint does not include the objective event timeline, all characters, all agent profiles, other agents' observations, other agents' beliefs, or secret observer-only events. The model is still composed from existing domain contracts and is still fixed fixture data rather than runtime isolation.
+
+`GET /demo/worlds/gray-harbor/me/perspective` returns the same narrow read model, but chooses the demo character from the `X-Demo-Agent-Id` header. This is a demo-only caller identity boundary and not production authentication.
+
+## TASK-009 Agent Input Read Model
+
+`GET /demo/worlds/gray-harbor/me/input` returns a current-agent input read model selected by `X-Demo-Agent-Id`. It contains only a world summary, the current character, the current `AgentProfile`, and allowed `Observation` records.
+
+This endpoint intentionally excludes `AgentBelief`, raw `OracleRequest`, raw `OracleResponse`, `ActionIntent`, `ActionResult`, objective event timelines, and other agents' records. In the fixed Gray Harbor demo, Chen Mo's Oracle advice is represented as an `Observation` with `observation_type: "oracle"` to show the intended boundary from player-provided information into agent-local input. This is a hand-authored demo projection, not the real Observation Builder.
+
+## TASK-011 Persistence Mapping
+
+Pydantic domain models remain the public contract authority. SQLAlchemy records are infrastructure-only: each stores the complete contract JSON in `payload` and duplicates only stable query, ordering, ownership, source, version, and correlation fields as typed columns. `WorldRepository` is the DB-to-domain mapping boundary; routes do not issue SQL.
+
+## TASK-012 Application Read Models
+
+GrayHarborReadService now owns composition of the existing observer, agent perspective, current-agent input, and replay HTTP read models. Routes depend on this service and contain no SQL or ORM mapping. Agent perspective records remain owner-filtered, while agent input includes only world summary, character, profile, and allowed Observation contracts. The replay read model is observer/debug-only and exposes ordered events plus existing source and correlation links without changing public domain contracts.
+
+## TASK-013 Observation Construction Boundary
+
+`ObservationBuilder` uniquely constructs event-derived and Oracle-derived `Observation` contracts before persistence. It applies deterministic recipient rules and emits only agent-owned partial projections. Repositories continue to map and retrieve records without deciding visibility. Agent input reads the persisted owner-filtered contracts and no longer synthesizes Oracle observations.
+
+## TASK-014 Action Lifecycle Read/Write Model
+
+`POST /demo/worlds/gray-harbor/me/actions` accepts a demo action submission DTO and returns the canonical `ActionIntent`, `ActionResult`, optional `WorldEvent`, and an idempotent replay flag. The public domain contracts are unchanged. Validator owns acceptance rules, the minimal World Engine exclusively creates result/event contracts, Application owns idempotency orchestration, and Repository atomically persists already adjudicated records.
