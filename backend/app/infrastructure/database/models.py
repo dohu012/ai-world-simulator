@@ -50,12 +50,7 @@ class LocationRecord(PayloadMixin, Base):
 
 class LocationEdgeRecord(Base):
     __tablename__ = "location_edges"
-    __table_args__ = (
-        UniqueConstraint(
-            "world_id", "from_location_id", "to_location_id", name="uq_location_edges_world_from_to"
-        ),
-        Index("ix_location_edges_world_from", "world_id", "from_location_id"),
-    )
+    __table_args__ = (Index("ix_location_edges_world_from", "world_id", "from_location_id"),)
     world_id: Mapped[str] = mapped_column(
         ForeignKey("worlds.id", ondelete="CASCADE"), primary_key=True
     )
@@ -195,3 +190,71 @@ class ActionResultRecord(PayloadMixin, Base):
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     correlation_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+
+
+class PromptVersionRecord(Base):
+    __tablename__ = "prompt_versions"
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    prompt_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    schema_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class AgentDecisionRecord(Base):
+    __tablename__ = "agent_decisions"
+    __table_args__ = (
+        UniqueConstraint("world_id", "agent_id", "idempotency_key", name="uq_decision_key"),
+        Index("ix_agent_decisions_world_agent_created", "world_id", "agent_id", "created_at"),
+    )
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    world_id: Mapped[str] = mapped_column(
+        ForeignKey("worlds.id", ondelete="CASCADE"), nullable=False
+    )
+    agent_id: Mapped[str] = mapped_column(
+        ForeignKey("characters.id", ondelete="CASCADE"), nullable=False
+    )
+    idempotency_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    claim_owner: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    lease_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    claim_token: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    action_intent_id: Mapped[str | None] = mapped_column(
+        ForeignKey("action_intents.id", ondelete="SET NULL"), nullable=True, unique=True
+    )
+    input_payload: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    outcome_payload: Mapped[dict[str, object] | None] = mapped_column(JSONB, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
+class ModelCallAttemptRecord(Base):
+    __tablename__ = "model_call_attempts"
+    __table_args__ = (
+        UniqueConstraint("decision_id", "attempt_number", name="uq_model_attempt_number"),
+    )
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    decision_id: Mapped[str] = mapped_column(
+        ForeignKey("agent_decisions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    attempt_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    provider: Mapped[str] = mapped_column(String(32), nullable=False)
+    model: Mapped[str] = mapped_column(String(128), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    provider_request_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    failure_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    payload: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+# Ensure TASK-017 tables are registered in shared metadata.
+from app.infrastructure.database import runtime_models as runtime_models  # noqa: E402,F401

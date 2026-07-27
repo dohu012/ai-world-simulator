@@ -85,3 +85,9 @@
 ### TASK-015 infrastructure status resolved
 
 The earlier local infrastructure blocker is resolved: Docker Desktop, PostgreSQL, and Redis are running healthy; migration `20260726_0003`, idempotent seed, all 9 infrastructure tests, and real accepted/stale/retry smoke scenarios pass. The historical failure note above is retained only as execution history, not a current limitation.
+
+## TASK-016 residual risks
+
+- Claim leases are persisted and non-terminal same-key calls fail closed with `DECISION_IN_PROGRESS`; automatic expired-lease takeover and crash injection coverage remain follow-up hardening.
+- OpenAI response mapping is covered by the adapter boundary but no paid live-provider smoke was run; live evaluation remains explicitly opt-in.
+- Decision audit is returned by the decision endpoint; the observer Replay Inspector has not yet merged decision rows into its global replay response.

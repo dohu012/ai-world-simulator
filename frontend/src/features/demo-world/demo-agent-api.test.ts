@@ -23,7 +23,8 @@ import {
 
 const demoAgentProfile: AgentProfile = {
   character_id: "char-chen-mo",
-  persona_summary: "Chen Mo is a special demo agent with isolated local knowledge.",
+  persona_summary:
+    "Chen Mo is a special demo agent with isolated local knowledge.",
   traits: { caution: 0.7, initiative: 0.6 },
   values: { safety: 0.9, truthfulness: 0.7 },
   desires: ["protect dependents", "understand local risk"],

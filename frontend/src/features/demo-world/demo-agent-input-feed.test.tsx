@@ -14,7 +14,8 @@ import {
 
 const demoAgentProfile: AgentProfile = {
   character_id: "char-chen-mo",
-  persona_summary: "Chen Mo is a special demo agent with isolated local knowledge.",
+  persona_summary:
+    "Chen Mo is a special demo agent with isolated local knowledge.",
   traits: { caution: 0.7, initiative: 0.6 },
   values: { safety: 0.9, truthfulness: 0.7 },
   desires: ["protect dependents", "understand local risk"],
@@ -100,7 +101,9 @@ test("renders the observation-only current-agent input feed", async () => {
     within(feed).getByText("obs-oracle-response-chen-north-gate"),
   ).toBeInTheDocument();
   expect(within(feed).getByText("oracle")).toBeInTheDocument();
-  expect(within(feed).getByText(demoOracleResponse.content)).toBeInTheDocument();
+  expect(
+    within(feed).getByText(demoOracleResponse.content),
+  ).toBeInTheDocument();
   expect(within(feed).queryByText("ActionIntent")).not.toBeInTheDocument();
   expect(within(feed).queryByText("ActionResult")).not.toBeInTheDocument();
   expect(fetchMock).toHaveBeenCalledWith(

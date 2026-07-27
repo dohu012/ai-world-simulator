@@ -17,4 +17,5 @@
 | TASK-013 | Done | Deterministic Observation Builder persists visibility-filtered event and Oracle input for each agent. |
 | TASK-014 | Done | Idempotent demo wait action traverses Validator, World Engine, atomic persistence, and replay. |
 | TASK-015 | Done | Concurrency-safe move, persisted topology, atomic character/world versioning, movement event, isolated runtime Observations, and replay projection. |
-| TASK-016 | Planned | Add an auditable Observation-only Agent decision slice with a provider-neutral Model Gateway, strict wait/move output, durable call/idempotency audit, and full model-to-world replay. |
+| TASK-016 | Done | Auditable Observation-only decisions now include fenced lease takeover, crash recovery without duplicate calls/actions, stale-input rejection, provider failures, privacy fixtures, replay projection, UI states, and clean migration/build gates. |
+| TASK-017 | Done | Durable PostgreSQL world runtime, monotonic virtual clock, exactly-once fixed event/wake, restart-safe Oracle reply/timeout winner, fresh authoritative final action, outbox, unified replay, APIs/UI, and real Docker PostgreSQL verification. |

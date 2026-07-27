@@ -20,6 +20,14 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
     log_level: str = "INFO"
+    model_provider: str = "disabled"
+    model_api_key: str | None = None
+    model_base_url: str = "https://api.openai.com"
+    model_id: str = "gpt-4.1-mini-2025-04-14"
+    model_timeout_seconds: float = 15.0
+    model_max_attempts: int = 2
+    model_max_output_tokens: int = 300
+    world_runtime_enabled: bool = False
 
 
 @lru_cache

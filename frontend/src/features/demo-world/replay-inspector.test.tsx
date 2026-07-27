@@ -42,6 +42,7 @@ const replay: WorldReplayResponse = {
       correlation_id: "corr-chen-oracle-decision",
       oracle_request_ids: [demoOracleRequest.id],
       oracle_response_ids: [demoOracleResponse.id],
+      decision_ids: ["decision-chen-oracle-final"],
       action_intent_ids: [demoActionIntent.id],
       action_result_ids: [demoActionResult.id],
       event_ids: [chenEvent.id],
@@ -67,7 +68,10 @@ afterEach(() => {
 });
 
 test("shows loading state", () => {
-  vi.stubGlobal("fetch", vi.fn(() => new Promise(() => undefined)));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() => new Promise(() => undefined)),
+  );
   renderInspector();
   expect(screen.getByLabelText("Replay Inspector loading")).toBeInTheDocument();
 });
@@ -86,9 +90,9 @@ test("shows typed API errors without retrying", async () => {
   });
   vi.stubGlobal("fetch", fetchMock);
   renderInspector();
-  expect(await screen.findByLabelText("Replay Inspector error")).toHaveTextContent(
-    "Gray Harbor has not been seeded.",
-  );
+  expect(
+    await screen.findByLabelText("Replay Inspector error"),
+  ).toHaveTextContent("Gray Harbor has not been seeded.");
   expect(fetchMock).toHaveBeenCalledTimes(1);
 });
 
@@ -97,7 +101,12 @@ test("shows empty replay state", async () => {
     "fetch",
     vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ ...replay, events: [], observations: [], chains: [] }),
+      json: async () => ({
+        ...replay,
+        events: [],
+        observations: [],
+        chains: [],
+      }),
     }),
   );
   renderInspector();
@@ -119,6 +128,7 @@ test("sorts events and renders source, counts, and Chen causal chain", async () 
   expect(rows[1]).toHaveTextContent("intent-chen-contact-courier");
   expect(rows[1]).toHaveTextContent("1 linked");
   expect(panel).toHaveTextContent("corr-chen-oracle-decision");
+  expect(panel).toHaveTextContent("1 decision");
   expect(panel).toHaveTextContent(
     "1 request · 1 response · 1 intent · 1 result · 1 event",
   );

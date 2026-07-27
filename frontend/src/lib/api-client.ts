@@ -1,4 +1,4 @@
-import type { ApiErrorBody } from "@/types/api";
+﻿import type { ApiErrorBody } from "@/types/api";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
 
@@ -60,4 +60,34 @@ export async function apiGet<T>(
     );
   }
   return body as T;
+}
+
+export async function apiPost<T>(
+  path: string,
+  body: unknown,
+  options: ApiGetOptions = {},
+): Promise<T> {
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+    body: JSON.stringify(body),
+  });
+  const value = await readResponseBody(response);
+  if (!response.ok) {
+    const errorBody =
+      typeof value === "object" && value !== null
+        ? (value as Partial<ApiErrorBody>)
+        : undefined;
+    throw new ApiClientError(
+      errorBody?.error?.message ?? "API request failed.",
+      response.status,
+      errorBody?.error?.code ?? "HTTP_ERROR",
+      errorBody?.error?.details ?? null,
+    );
+  }
+  return value as T;
 }

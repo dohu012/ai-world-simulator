@@ -6,7 +6,7 @@
         "dev": "next dev --hostname 0.0.0.0",
         "build": "next build",
         "start": "next start",
-        "lint": "next lint",
+        "lint": "eslint src scripts/*.mjs next.config.ts tailwind.config.ts vitest.config.ts",
         "typecheck": "tsc --noEmit",
         "generate:domain-types": "node scripts/generate-domain-types.mjs",
         "format": "prettier --write .",

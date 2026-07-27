@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   ActionIntent,
   ActionResult,
   AgentBelief,
@@ -76,6 +76,16 @@ export interface ReplayChain {
   action_intent_ids: string[];
   action_result_ids: string[];
   event_ids: string[];
+  decision_ids?: string[];
+}
+export interface DecisionReplayItem {
+  decision_id: string;
+  agent_id: string;
+  correlation_id: string;
+  status: string;
+  outcome: string | null;
+  input_observation_watermark: string;
+  final_action_intent_id: string | null;
 }
 
 export interface WorldReplayResponse {
@@ -87,4 +97,64 @@ export interface WorldReplayResponse {
   action_intents: ActionIntent[];
   action_results: ActionResult[];
   chains: ReplayChain[];
+  decisions?: DecisionReplayItem[];
+}
+
+export interface DecisionAttempt {
+  attempt_number: number;
+  provider: string;
+  model: string;
+  provider_request_id: string | null;
+  failure_code: string | null;
+  latency_ms: number;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  cost_usd: number | null;
+}
+export interface AgentDecisionResponse {
+  decision_id: string;
+  status: string;
+  idempotent_replay: boolean;
+  observation_watermark: string;
+  observation_ids: string[];
+  prompt_version: string;
+  prompt_hash: string;
+  schema_version: string;
+  schema_hash: string;
+  attempts: DecisionAttempt[];
+  proposal: {
+    action: "wait" | "move";
+    affordance_id: string;
+    rationale_summary: string;
+    observation_ids: string[];
+    observation_watermark: string;
+  } | null;
+  failure_code: string | null;
+  action: {
+    intent: ActionIntent;
+    result: ActionResult;
+    event: WorldEvent | null;
+    idempotent_replay: boolean;
+  } | null;
+}
+
+export interface RuntimeResponse {
+  status: string;
+  world_time: string;
+  generation: number;
+  version: number;
+  next_due_world_time: string | null;
+  backlog: number;
+}
+
+export interface OracleWindowResponse {
+  request_id: string;
+  agent_id: string;
+  status: string;
+  outcome: string | null;
+  final_decision_id: string | null;
+  question: string;
+  context_summary: string;
+  world_deadline: string;
+  real_deadline: string;
 }

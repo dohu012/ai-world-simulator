@@ -65,6 +65,7 @@ async def test_replay_endpoint_exposes_ordered_events_and_chen_chain() -> None:
         "action_intent_ids": ["intent-chen-contact-courier"],
         "action_result_ids": ["result-chen-contact-courier"],
         "event_ids": ["event-chen-action-result"],
+        "decision_ids": [],
     }
 
 

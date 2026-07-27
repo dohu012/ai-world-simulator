@@ -8,11 +8,14 @@ import type { ReplayChain, WorldReplayResponse } from "@/types/api";
 
 function compactId(value: string | null) {
   if (!value) return "none";
-  return value.length > 28 ? `${value.slice(0, 14)}鈥?{value.slice(-10)}` : value;
+  return value.length > 28
+    ? `${value.slice(0, 14)}鈥?{value.slice(-10)}`
+    : value;
 }
 
 function chainLabel(chain: ReplayChain) {
   return [
+    `${chain.decision_ids?.length ?? 0} decision`,
     `${chain.oracle_request_ids.length} request`,
     `${chain.oracle_response_ids.length} response`,
     `${chain.action_intent_ids.length} intent`,
@@ -84,7 +87,8 @@ export function ReplayInspector() {
             );
             const chain = data.chains.find((candidate) =>
               candidate.event_ids.includes(event.id),
-            );            const result = data.action_results.find((candidate) =>
+            );
+            const result = data.action_results.find((candidate) =>
               candidate.generated_event_ids.includes(event.id),
             );
             return (
@@ -102,12 +106,17 @@ export function ReplayInspector() {
                   <span className="rounded border border-slate-600 px-2 py-0.5 text-xs text-slate-300">
                     {visibilityLabel(event)}
                   </span>
-                  <strong className="text-sm text-slate-50">{event.title}</strong>
+                  <strong className="text-sm text-slate-50">
+                    {event.title}
+                  </strong>
                 </div>
                 <dl className="mt-3 grid gap-2 text-xs text-slate-300 md:grid-cols-3">
                   <div>
                     <dt className="text-slate-500">source_action_id</dt>
-                    <dd className="font-mono" title={event.source_action_id ?? "none"}>
+                    <dd
+                      className="font-mono"
+                      title={event.source_action_id ?? "none"}
+                    >
                       {compactId(event.source_action_id)}
                     </dd>
                   </div>
@@ -124,7 +133,8 @@ export function ReplayInspector() {
                 </dl>
                 <p className="mt-3 text-xs text-slate-400">
                   {chain ? `Chain: ${chainLabel(chain)}` : "No causal chain"}
-                </p>                {result ? (
+                </p>{" "}
+                {result ? (
                   <div className="mt-3 text-xs text-slate-300">
                     <p>
                       Result: {result.status}
@@ -132,8 +142,11 @@ export function ReplayInspector() {
                       {` · ${result.witness_character_ids.length} recipient(s)`}
                     </p>
                     {result.state_changes.map((change) => (
-                      <p key={`${change.entity_type}-${change.entity_id}-${change.field}`}>
-                        {change.entity_type}.{change.field}: {String(change.old_value)} → {String(change.new_value)}
+                      <p
+                        key={`${change.entity_type}-${change.entity_id}-${change.field}`}
+                      >
+                        {change.entity_type}.{change.field}:{" "}
+                        {String(change.old_value)} → {String(change.new_value)}
                       </p>
                     ))}
                   </div>
@@ -168,5 +181,3 @@ export function ReplayInspector() {
     </section>
   );
 }
-
-

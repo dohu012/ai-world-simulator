@@ -22,6 +22,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        app.state.settings = app_settings
         app.state.database = Database(app_settings.database_url)
         app.state.redis = create_redis_client(app_settings.redis_url)
         yield

@@ -1,7 +1,9 @@
+﻿import { AgentDecisionPanel } from "@/features/demo-world/agent-decision-panel";
 import { DemoAgentInputFeed } from "@/features/demo-world/demo-agent-input-feed";
 import { DemoWorldObserver } from "@/features/demo-world/demo-world-observer";
 import { DemoAgentPreview } from "@/features/demo-world/demo-agent-preview";
 import { ReplayInspector } from "@/features/demo-world/replay-inspector";
+import { WorldRuntimePanel } from "@/features/demo-world/world-runtime-panel";
 import { HealthDashboard } from "@/features/health/health-dashboard";
 
 export default function Home() {
@@ -10,6 +12,12 @@ export default function Home() {
       <DemoWorldObserver />
       <div className="mt-6">
         <ReplayInspector />
+        <div className="mt-6">
+          <WorldRuntimePanel />
+        </div>
+      </div>
+      <div className="mt-6">
+        <AgentDecisionPanel />
       </div>
       <div className="mt-6">
         <DemoAgentPreview />

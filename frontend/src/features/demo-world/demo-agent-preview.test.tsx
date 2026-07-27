@@ -3,7 +3,10 @@ import { render, screen, within } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 
 import { DemoAgentPreview } from "@/features/demo-world/demo-agent-preview";
-import type { DemoAgentPerspectiveResponse, DemoWorldResponse } from "@/types/api";
+import type {
+  DemoAgentPerspectiveResponse,
+  DemoWorldResponse,
+} from "@/types/api";
 import type { AgentProfile } from "@/types/domain";
 import {
   demoActionIntent,
@@ -32,7 +35,8 @@ const forbiddenObserverPayload: DemoWorldResponse = {
 
 const demoAgentProfile: AgentProfile = {
   character_id: "char-chen-mo",
-  persona_summary: "Chen Mo is a special demo agent with isolated local knowledge.",
+  persona_summary:
+    "Chen Mo is a special demo agent with isolated local knowledge.",
   traits: { caution: 0.7, initiative: 0.6 },
   values: { safety: 0.9, truthfulness: 0.7 },
   desires: ["protect dependents", "understand local risk"],
@@ -100,9 +104,7 @@ test("renders current-agent perspective from the me endpoint", async () => {
 
   expect(within(preview).getByText("char-chen-mo")).toBeInTheDocument();
   expect(within(preview).getByText(demoCharacters[2].name)).toBeInTheDocument();
-  expect(
-    within(preview).getByText(/只听到传言和街面变化/),
-  ).toBeInTheDocument();
+  expect(within(preview).getByText(/只听到传言和街面变化/)).toBeInTheDocument();
   expect(fetchMock).toHaveBeenCalledWith(
     expect.stringContaining("/demo/worlds/gray-harbor/me/perspective"),
     expect.objectContaining({

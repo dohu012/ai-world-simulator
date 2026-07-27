@@ -4,7 +4,7 @@ import json
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,6 +24,7 @@ from app.domain.schemas import (
     WorldFact,
 )
 from app.infrastructure.database import models as r
+from app.infrastructure.database import runtime_models as rr
 from app.services.demo_world import (
     DemoAgentPerspectiveReadModel,
     DemoWorldReadModel,
@@ -48,6 +49,7 @@ class ReplayChain(BaseModel):
     action_intent_ids: list[str]
     action_result_ids: list[str]
     event_ids: list[str]
+    decision_ids: list[str] = Field(default_factory=list)
 
 
 class WorldReplayReadModel(BaseModel):
@@ -61,10 +63,27 @@ class WorldReplayReadModel(BaseModel):
     action_results: list[ActionResult]
     chains: list[ReplayChain]
 
+    decisions: list["DecisionReplayItem"] = Field(default_factory=list)
+
+
+class DecisionReplayItem(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    decision_id: str
+    agent_id: str
+    status: str
+    observation_ids: list[str]
+    prompt_hash: str
+    failure_code: str | None
+    action_intent_id: str | None
+
 
 def _from_json(contract: Any, payload: dict[str, Any]) -> Any:
     """Validate a JSONB payload through the domain contract's JSON path."""
     return contract.model_validate_json(json.dumps(payload))
+
+
+def _string_list(value: object) -> list[str]:
+    return [str(item) for item in value] if isinstance(value, list) else []
 
 
 class WorldRepository:
@@ -191,17 +210,56 @@ class WorldRepository:
         world = await self.get_observer_world(world_id)
         if world is None:
             return None
+        decision_rows = list(
+            (
+                await self.session.scalars(
+                    select(r.AgentDecisionRecord)
+                    .where(r.AgentDecisionRecord.world_id == world_id)
+                    .order_by(r.AgentDecisionRecord.created_at, r.AgentDecisionRecord.id)
+                )
+            ).all()
+        )
+        windows = list(
+            (
+                await self.session.scalars(
+                    select(rr.OracleWindowRecord).where(rr.OracleWindowRecord.world_id == world_id)
+                )
+            ).all()
+        )
+        decisions = [
+            DecisionReplayItem(
+                decision_id=row.id,
+                agent_id=row.agent_id,
+                status=row.status,
+                observation_ids=_string_list(row.input_payload.get("observation_ids")),
+                prompt_hash=str(row.input_payload.get("prompt_hash", "")),
+                failure_code=str((row.outcome_payload or {}).get("failure_code"))
+                if (row.outcome_payload or {}).get("failure_code")
+                else None,
+                action_intent_id=row.action_intent_id,
+            )
+            for row in decision_rows
+        ]
         correlations = (
             {x.correlation_id for x in world.events}
             | {x.decision_correlation_id for x in world.oracleRequests}
             | {x.correlation_id for x in world.actionIntents}
             | {x.correlation_id for x in world.actionResults}
+            | {window.decision_correlation_id for window in windows}
         )
         chains = []
         for correlation_id in sorted(correlations):
             requests = [
                 x.id for x in world.oracleRequests if x.decision_correlation_id == correlation_id
             ]
+            action_ids = [x.id for x in world.actionIntents if x.correlation_id == correlation_id]
+            window_decisions = {
+                window.final_decision_id
+                for window in windows
+                if window.decision_correlation_id == correlation_id
+                and window.final_decision_id is not None
+            }
+
             chains.append(
                 ReplayChain(
                     correlation_id=correlation_id,
@@ -209,13 +267,17 @@ class WorldRepository:
                     oracle_response_ids=[
                         x.id for x in world.oracleResponses if x.request_id in requests
                     ],
-                    action_intent_ids=[
-                        x.id for x in world.actionIntents if x.correlation_id == correlation_id
-                    ],
+                    action_intent_ids=action_ids,
                     action_result_ids=[
                         x.id for x in world.actionResults if x.correlation_id == correlation_id
                     ],
                     event_ids=[x.id for x in world.events if x.correlation_id == correlation_id],
+                    decision_ids=[
+                        decision.decision_id
+                        for decision in decisions
+                        if decision.decision_id in window_decisions
+                        or decision.action_intent_id in action_ids
+                    ],
                 )
             )
         return WorldReplayReadModel(
@@ -227,6 +289,7 @@ class WorldRepository:
             action_intents=world.actionIntents,
             action_results=world.actionResults,
             chains=chains,
+            decisions=decisions,
         )
 
     async def get_action_lifecycle(
