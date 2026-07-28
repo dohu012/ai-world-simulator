@@ -3,6 +3,7 @@ import { DemoAgentInputFeed } from "@/features/demo-world/demo-agent-input-feed"
 import { DemoWorldObserver } from "@/features/demo-world/demo-world-observer";
 import { DemoAgentPreview } from "@/features/demo-world/demo-agent-preview";
 import { ReplayInspector } from "@/features/demo-world/replay-inspector";
+import { SocialWorldPanel } from "@/features/demo-world/social-world-panel";
 import { WorldRuntimePanel } from "@/features/demo-world/world-runtime-panel";
 import { HealthDashboard } from "@/features/health/health-dashboard";
 
@@ -15,6 +16,9 @@ export default function Home() {
         <div className="mt-6">
           <WorldRuntimePanel />
         </div>
+      </div>
+      <div className="mt-6">
+        <SocialWorldPanel />
       </div>
       <div className="mt-6">
         <AgentDecisionPanel />

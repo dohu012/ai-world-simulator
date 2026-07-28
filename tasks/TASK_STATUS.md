@@ -19,3 +19,5 @@
 | TASK-015 | Done | Concurrency-safe move, persisted topology, atomic character/world versioning, movement event, isolated runtime Observations, and replay projection. |
 | TASK-016 | Done | Auditable Observation-only decisions now include fenced lease takeover, crash recovery without duplicate calls/actions, stale-input rejection, provider failures, privacy fixtures, replay projection, UI states, and clean migration/build gates. |
 | TASK-017 | Done | Durable PostgreSQL world runtime, monotonic virtual clock, exactly-once fixed event/wake, restart-safe Oracle reply/timeout winner, fresh authoritative final action, outbox, unified replay, APIs/UI, and real Docker PostgreSQL verification. |
+| TASK-018 | Done | Durable multi-channel propagation, append-only belief revision, bounded Chen-Zhou correction dialogue, owner-isolated APIs, observer UI, and PostgreSQL restart/race proof. |
+| TASK-019 | Planned | Seven-day Gray Harbor internal-playtest slice with 30 tiered residents, durable goals/plans, contested resources, richer authoritative actions, conditional events, deterministic adjudication, and consequential Day-7 outcomes. |

@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.application.agent_decision import AgentDecisionApplicationService, DecisionSubmission
 from app.application.gray_harbor import WORLD_ID
 from app.application.observation_builder import ObservationBuilder
+from app.application.social_runtime import SocialRuntimeService
 from app.domain.enums import EventType, FactVisibility, ObservationType, OracleRequestStatus
 from app.domain.observation import FeltChange
 from app.domain.schemas import Character, Observation, OracleRequest, OracleResponse, WorldEvent
@@ -171,6 +172,9 @@ class PostgresWorldRuntimeAdapter:
                 await self._publish_fixture(session, runtime, schedule)
             await self._expire_windows(session, runtime.current_world_time, datetime.now(UTC))
             await session.commit()
+        social = SocialRuntimeService(self.sessions)
+        await social.seed_scenario()
+        await social.deliver_due()
         await self._continue_pending()
         return await self.read()
 

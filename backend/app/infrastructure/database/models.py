@@ -258,3 +258,4 @@ class ModelCallAttemptRecord(Base):
 
 # Ensure TASK-017 tables are registered in shared metadata.
 from app.infrastructure.database import runtime_models as runtime_models  # noqa: E402,F401
+from app.infrastructure.database import social_models as social_models  # noqa: E402,F401

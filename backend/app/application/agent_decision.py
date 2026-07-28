@@ -122,7 +122,8 @@ class AgentDecisionApplicationService:
                 ).scalars()
             )
         observation_ids = [
-            x.id for x in sorted(input_model.observations, key=lambda x: (x.observed_at, x.id))
+            x.id
+            for x in sorted(input_model.observations, key=lambda x: (x.observed_at, x.id))[-32:]
         ]
         watermark = sha256(json.dumps(observation_ids, separators=(",", ":")).encode()).hexdigest()
         affordances: list[dict[str, Any]] = [{"id": "wait", "action": "wait", "parameters": {}}]
@@ -383,7 +384,7 @@ class AgentDecisionApplicationService:
             item.id
             for item in sorted(
                 input_model.observations, key=lambda item: (item.observed_at, item.id)
-            )
+            )[-32:]
         ]
         watermark = sha256(json.dumps(observation_ids, separators=(",", ":")).encode()).hexdigest()
         safe_input = {

@@ -124,3 +124,19 @@ TASK-017 now has a PostgreSQL-backed adapter behind the runtime port, a monotoni
 The fixed runtime, Oracle inbox/reply and notification APIs are exposed, and the frontend contains World Runtime Control, Oracle Inbox, and decision-linked causal replay surfaces. Deterministic tests do not sleep. Runtime defaults disabled.
 
 TASK-016 and TASK-017 are complete. Docker PostgreSQL verification covers fenced decision takeover, persisted-completion and post-action crash recovery, stale-after-inference rejection, two-worker schedule publication, restart while awaiting Oracle input, reply/timeout transactional winners, explicit silence, malicious reply text constrained to server affordances, decision-linked replay, and zero duplicate logical work. The final backend suite passes 125 tests; Ruff, format, mypy, schema export, Alembic check, and real 0006/0005 downgrade-to-0004 then upgrade-to-head pass. Frontend passes 33 tests, typecheck, ESLint, format, and production build.
+
+## Next Planned Task: TASK-018
+
+TASK-018 will complete the missing multi-character half of the product plan's first technical milestone. One objective Gray Harbor fact will travel to Lin, Zhou, and Chen through different durable channels, delays, reliability and distortion, producing owner-scoped and potentially conflicting belief histories before a bounded Chen-Zhou exchange can correct or preserve the rumor.
+
+The task includes server-authoritative communication actions, restart-safe message transmissions, append-only belief evidence, selective wakes, three-Agent TASK-016 decisions, privacy-safe causal replay, and observer/Agent frontend surfaces. It explicitly excludes general world creation, long-term vector memory, broad actions, production push, and unbounded dialogue.
+
+Before implementation, TASK-018 requires a dated ADR and executable spikes comparing graph/routing libraries, PostgreSQL versus stream/broker delivery, belief-revision approaches, explicit orchestration versus multi-Agent dialogue frameworks, and deterministic evaluation/observability tools. Library adoption must follow evidence rather than precede it.
+
+## TASK-018 Update
+
+TASK-018 is complete. Gray Harbor now has deterministic direct, bulletin, and distorted courier propagation; owner-scoped append-only evidence and belief revisions; a PostgreSQL-backed bounded Chen-Zhou correction exchange; privacy-safe observer/Agent APIs; and propagation, belief-evolution, and conversation UI. The real PostgreSQL smoke proves restart/two-worker idempotency and exact counts of five delivered transmissions, five Observations, and five evidence rows. No paid model call or new production dependency was used.
+
+## Next Planned Task: TASK-019
+
+TASK-019 will turn the completed information-propagation milestone into a seven-day Gray Harbor internal-playtest slice: exactly 30 tiered residents, durable goals and plans, contested food/medicine/capacity, at least five narrow authoritative action types, hard and conditional events, reproducible uncertain adjudication, and a consequential Day-7 outcome. Before implementation it requires a dated ADR and executable spikes comparing discrete-event simulation, plan/rule engines, resource ledgers, deterministic RNG, tiered population simulation, and behavior evaluation. Long-term vector memory, production notifications, free world creation, and 30 independent LLM Agents remain deferred until this fixed-world fate loop is engaging, explainable, private, restart-safe, and cost-bounded.
