@@ -1,0 +1,91 @@
+{
+  "$defs": {
+    "JSONObject": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JSONValue"
+      },
+      "type": "object"
+    },
+    "JSONPrimitive": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "JSONValue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JSONPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "action_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "created_world_time": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "trace": {
+      "$ref": "#/$defs/JSONObject"
+    },
+    "world_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    }
+  },
+  "required": [
+    "id",
+    "world_id",
+    "action_id",
+    "trace",
+    "created_world_time",
+    "schema_version"
+  ],
+  "title": "AdjudicationRecord",
+  "type": "object"
+}

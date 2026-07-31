@@ -1,0 +1,137 @@
+{
+  "$defs": {
+    "Dimension": {
+      "enum": [
+        "caution",
+        "compassion",
+        "confidence",
+        "self_reliance",
+        "trust",
+        "affection",
+        "respect",
+        "fear",
+        "resentment",
+        "gratitude",
+        "dependence",
+        "familiarity"
+      ],
+      "title": "Dimension",
+      "type": "string"
+    },
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "agent_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "baseline_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "confidence": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "content_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Content Hash",
+      "type": "string"
+    },
+    "evidence_horizon": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "lifecycle": {
+      "default": "active",
+      "enum": [
+        "active",
+        "superseded",
+        "reverted",
+        "invalidated"
+      ],
+      "title": "Lifecycle",
+      "type": "string"
+    },
+    "offsets": {
+      "additionalProperties": {
+        "maximum": 1.0,
+        "minimum": -1.0,
+        "type": "number"
+      },
+      "maxProperties": 16,
+      "propertyNames": {
+        "$ref": "#/$defs/Dimension"
+      },
+      "title": "Offsets",
+      "type": "object"
+    },
+    "owner_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "persona_summary": {
+      "maxLength": 600,
+      "minLength": 1,
+      "title": "Persona Summary",
+      "type": "string"
+    },
+    "policy_version": {
+      "const": "evolution-policy-v1",
+      "default": "evolution-policy-v1",
+      "title": "Policy Version",
+      "type": "string"
+    },
+    "previous_snapshot_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Previous Snapshot Id"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "world_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    }
+  },
+  "required": [
+    "id",
+    "baseline_id",
+    "world_id",
+    "owner_id",
+    "agent_id",
+    "version",
+    "confidence",
+    "persona_summary",
+    "evidence_horizon",
+    "content_hash",
+    "schema_version"
+  ],
+  "title": "IdentitySnapshot",
+  "type": "object"
+}

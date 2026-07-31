@@ -1,0 +1,54 @@
+{
+  "id": "gray-harbor-memory-eval",
+  "version": "1.0.0",
+  "thresholds": {
+    "required_recall_at_k": 1.0,
+    "forbidden_exposure": 0,
+    "fallback_success": 1.0,
+    "ndcg_at_k": 0.9
+  },
+  "cases": [
+    {
+      "id": "lin-day1-medicine",
+      "owner_id": "char-lin-zhixia",
+      "cutoff_day": 6,
+      "query": "clinic medicine shortage 药品短缺",
+      "required": ["lin-day1-shortage"],
+      "relevant": ["lin-day4-cache-rejection"],
+      "optional": [],
+      "forbidden": ["chen-private-oracle", "zhou-day7-future", "other-world-clinic"],
+      "maximum_k": 6,
+      "character_budget": 4000,
+      "lanes": ["lexical", "structured", "vector", "fused"],
+      "fallback": "lexical_structured"
+    },
+    {
+      "id": "chen-ration-shipment-oracle",
+      "owner_id": "char-chen-mo",
+      "cutoff_day": 7,
+      "query": "ration transfer rejected cache shipment advice outcome",
+      "required": ["chen-day2-ration", "chen-day4-rejection", "chen-day5-shipment", "chen-oracle-help-outcome"],
+      "relevant": ["chen-day6-plan-abandoned"],
+      "optional": [],
+      "forbidden": ["lin-private-observation", "zhou-private-oracle", "other-world-chen"],
+      "maximum_k": 6,
+      "character_budget": 4000,
+      "lanes": ["lexical", "structured", "vector", "fused"],
+      "fallback": "lexical_structured"
+    },
+    {
+      "id": "zhou-checkpoint-capacity",
+      "owner_id": "char-zhou-qiming",
+      "cutoff_day": 7,
+      "query": "checkpoint duty rescue capacity conflict",
+      "required": ["zhou-day3-checkpoint", "zhou-day7-capacity"],
+      "relevant": [],
+      "optional": ["zhou-corrected-rumor"],
+      "forbidden": ["future-day8", "hidden-objective-fact", "chen-private-oracle"],
+      "maximum_k": 6,
+      "character_budget": 4000,
+      "lanes": ["lexical", "structured", "vector", "fused"],
+      "fallback": "lexical_structured"
+    }
+  ]
+}

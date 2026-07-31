@@ -1,0 +1,33 @@
+{
+  "dataset_id": "gray-harbor-product-validation",
+  "version": "1.0.0",
+  "license": "project-internal",
+  "contains_personal_data": false,
+  "protocol_version": "1.0.0",
+  "intervals": [
+    {
+      "id": "harbor-rejection",
+      "case": "oracle_reject",
+      "claims": [
+        {"id": "a1", "source_id": "observation-weather", "source_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "epistemic_class": "observed", "text": "Chen observed that the east road was flooded."},
+        {"id": "a2", "source_id": "belief-route", "source_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "epistemic_class": "believed", "text": "Chen believed the harbor stairs remained passable."},
+        {"id": "a3", "source_id": "oracle-route", "source_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "epistemic_class": "decision", "text": "Chen rejected the suggestion to use the east road."},
+        {"id": "a4", "source_id": "outcome-route", "source_hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "epistemic_class": "outcome", "text": "Chen reached the clinic by the harbor stairs."}
+      ]
+    },
+    {
+      "id": "harbor-partial-follow",
+      "case": "oracle_partial_follow",
+      "claims": [
+        {"id": "b1", "source_id": "fact-capacity", "source_hash": "1111111111111111111111111111111111111111111111111111111111111111", "epistemic_class": "objective", "text": "The rescue boat had ten available seats."},
+        {"id": "b2", "source_id": "belief-passengers", "source_hash": "2222222222222222222222222222222222222222222222222222222222222222", "epistemic_class": "believed", "text": "Chen believed two more residents might arrive."},
+        {"id": "b3", "source_id": "correction-passengers", "source_hash": "3333333333333333333333333333333333333333333333333333333333333333", "epistemic_class": "correction", "text": "A radio report corrected the expected group size."},
+        {"id": "b4", "source_id": "decision-seats", "source_hash": "4444444444444444444444444444444444444444444444444444444444444444", "epistemic_class": "decision", "text": "Chen followed the allocation advice only for the confirmed group."},
+        {"id": "b5", "source_id": "outcome-seats", "source_hash": "5555555555555555555555555555555555555555555555555555555555555555", "epistemic_class": "outcome", "text": "All ten seats were irreversibly allocated."}
+      ]
+    }
+  ],
+  "decoys": ["future", "cross_owner", "private_memory", "prompt_injection"],
+  "expected_decision_without_humans": "defer",
+  "removal": "Delete this file and the product_validation module; no external service migration is required."
+}

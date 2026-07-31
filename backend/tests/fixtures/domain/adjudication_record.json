@@ -1,0 +1,1 @@
+{"id":"adjudication-route-1","world_id":"world-gray-harbor","action_id":"action-route-1","trace":{"policy_id":"risky-route","policy_version":1,"seed_hash":"0123456789abcdef","roll_basis_points":1200,"threshold_basis_points":4200,"accepted":true},"created_world_time":"2026-08-03T00:00:00+08:00","schema_version":"1.0"}

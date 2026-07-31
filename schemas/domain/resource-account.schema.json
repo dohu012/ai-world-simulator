@@ -1,0 +1,84 @@
+{
+  "$defs": {
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "available": {
+      "maximum": 1000000,
+      "minimum": 0,
+      "title": "Available",
+      "type": "integer"
+    },
+    "capacity": {
+      "anyOf": [
+        {
+          "maximum": 1000000,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Capacity"
+    },
+    "consumed": {
+      "maximum": 1000000,
+      "minimum": 0,
+      "title": "Consumed",
+      "type": "integer"
+    },
+    "holder_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "holder_kind": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "reserved": {
+      "maximum": 1000000,
+      "minimum": 0,
+      "title": "Reserved",
+      "type": "integer"
+    },
+    "resource_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "world_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    }
+  },
+  "required": [
+    "id",
+    "world_id",
+    "resource_id",
+    "holder_kind",
+    "holder_id",
+    "available",
+    "reserved",
+    "consumed",
+    "version",
+    "schema_version"
+  ],
+  "title": "ResourceAccount",
+  "type": "object"
+}

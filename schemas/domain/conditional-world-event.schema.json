@@ -1,0 +1,110 @@
+{
+  "$defs": {
+    "JSONObject": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JSONValue"
+      },
+      "type": "object"
+    },
+    "JSONPrimitive": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "JSONValue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/JSONPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/JSONValue"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "condition": {
+      "$ref": "#/$defs/JSONObject"
+    },
+    "deadline_world_time": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "event_specification": {
+      "$ref": "#/$defs/JSONObject"
+    },
+    "id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "idempotency_key": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "one_shot": {
+      "default": true,
+      "title": "One Shot",
+      "type": "boolean"
+    },
+    "policy_version": {
+      "minimum": 1,
+      "title": "Policy Version",
+      "type": "integer"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "status": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "world_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    }
+  },
+  "required": [
+    "id",
+    "world_id",
+    "policy_version",
+    "condition",
+    "deadline_world_time",
+    "idempotency_key",
+    "event_specification",
+    "status",
+    "schema_version"
+  ],
+  "title": "ConditionalWorldEvent",
+  "type": "object"
+}

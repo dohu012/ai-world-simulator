@@ -91,3 +91,21 @@ export async function apiPost<T>(
   }
   return value as T;
 }
+
+export async function apiDelete(
+  path: string,
+  options: ApiGetOptions = {},
+): Promise<void> {
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    method: "DELETE",
+    headers: { Accept: "application/json", ...options.headers },
+  });
+  if (!response.ok) {
+    throw new ApiClientError(
+      "API request failed.",
+      response.status,
+      "HTTP_ERROR",
+      null,
+    );
+  }
+}

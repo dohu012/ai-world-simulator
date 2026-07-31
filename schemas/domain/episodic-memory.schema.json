@@ -1,0 +1,272 @@
+{
+  "$defs": {
+    "EpistemicStatus": {
+      "enum": [
+        "observed",
+        "subjective",
+        "inferred"
+      ],
+      "title": "EpistemicStatus",
+      "type": "string"
+    },
+    "ImportanceFeatures": {
+      "additionalProperties": false,
+      "properties": {
+        "contradiction": {
+          "$ref": "#/$defs/UnitFloat",
+          "default": 0.0
+        },
+        "goal_change": {
+          "$ref": "#/$defs/UnitFloat",
+          "default": 0.0
+        },
+        "irreversible": {
+          "$ref": "#/$defs/UnitFloat",
+          "default": 0.0
+        },
+        "novelty": {
+          "$ref": "#/$defs/UnitFloat",
+          "default": 0.0
+        },
+        "oracle_relevance": {
+          "$ref": "#/$defs/UnitFloat",
+          "default": 0.0
+        },
+        "personal_risk": {
+          "$ref": "#/$defs/UnitFloat",
+          "default": 0.0
+        },
+        "repetition": {
+          "$ref": "#/$defs/UnitFloat",
+          "default": 0.0
+        },
+        "resource_impact": {
+          "$ref": "#/$defs/UnitFloat",
+          "default": 0.0
+        }
+      },
+      "title": "ImportanceFeatures",
+      "type": "object"
+    },
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "SourceReference": {
+      "additionalProperties": false,
+      "properties": {
+        "owner_id": {
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "source_id": {
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "source_type": {
+          "enum": [
+            "observation",
+            "event",
+            "action",
+            "action_result",
+            "message",
+            "oracle",
+            "belief",
+            "plan",
+            "memory"
+          ],
+          "title": "Source Type",
+          "type": "string"
+        },
+        "world_id": {
+          "$ref": "#/$defs/NonEmptyString"
+        }
+      },
+      "required": [
+        "source_type",
+        "source_id",
+        "world_id",
+        "owner_id"
+      ],
+      "title": "SourceReference",
+      "type": "object"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "UnitFloat": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "type": "number"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "admission_score": {
+      "$ref": "#/$defs/UnitFloat"
+    },
+    "confidence": {
+      "$ref": "#/$defs/UnitFloat"
+    },
+    "emotion_intensity": {
+      "$ref": "#/$defs/UnitFloat",
+      "default": 0.0
+    },
+    "emotion_labels": {
+      "items": {
+        "$ref": "#/$defs/NonEmptyString"
+      },
+      "maxItems": 8,
+      "title": "Emotion Labels",
+      "type": "array"
+    },
+    "ended_at": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Timestamp"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "epistemic_status": {
+      "$ref": "#/$defs/EpistemicStatus"
+    },
+    "goal_ids": {
+      "items": {
+        "$ref": "#/$defs/NonEmptyString"
+      },
+      "maxItems": 16,
+      "title": "Goal Ids",
+      "type": "array"
+    },
+    "id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "importance_features": {
+      "$ref": "#/$defs/ImportanceFeatures"
+    },
+    "involved_entity_ids": {
+      "items": {
+        "$ref": "#/$defs/NonEmptyString"
+      },
+      "maxItems": 32,
+      "title": "Involved Entity Ids",
+      "type": "array"
+    },
+    "location_ids": {
+      "items": {
+        "$ref": "#/$defs/NonEmptyString"
+      },
+      "maxItems": 16,
+      "title": "Location Ids",
+      "type": "array"
+    },
+    "memory_type": {
+      "const": "episodic",
+      "title": "Memory Type",
+      "type": "string"
+    },
+    "model_revision": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Model Revision"
+    },
+    "occurred_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "owner_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "plan_ids": {
+      "items": {
+        "$ref": "#/$defs/NonEmptyString"
+      },
+      "maxItems": 16,
+      "title": "Plan Ids",
+      "type": "array"
+    },
+    "policy_version": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/SourceReference"
+      },
+      "maxItems": 32,
+      "minItems": 1,
+      "title": "Sources",
+      "type": "array"
+    },
+    "summary": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Summary",
+      "type": "string"
+    },
+    "supersedes_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Supersedes Id"
+    },
+    "tombstoned_at": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Timestamp"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "world_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    }
+  },
+  "required": [
+    "id",
+    "world_id",
+    "owner_id",
+    "memory_type",
+    "summary",
+    "occurred_at",
+    "sources",
+    "importance_features",
+    "admission_score",
+    "confidence",
+    "epistemic_status",
+    "policy_version",
+    "version",
+    "schema_version"
+  ],
+  "title": "EpisodicMemory",
+  "type": "object"
+}

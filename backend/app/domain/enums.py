@@ -49,6 +49,13 @@ class ActionType(StrEnum):
     SPEAK = "speak"
     WAIT = "wait"
     CUSTOM = "custom"
+    ACQUIRE_RESOURCE = "acquire_resource"
+    TRANSFER_RESOURCE = "transfer_resource"
+    CONSUME_RESOURCE = "consume_resource"
+    HELP_CHARACTER = "help_character"
+    QUEUE_FOR_SERVICE = "queue_for_service"
+    ATTEMPT_ROUTE = "attempt_route"
+    ABANDON_PLAN = "abandon_plan"
 
 
 class ActionStatus(StrEnum):

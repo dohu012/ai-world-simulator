@@ -1,0 +1,129 @@
+{
+  "$defs": {
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "agent_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "content_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Content Hash",
+      "type": "string"
+    },
+    "created_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "desires": {
+      "items": {
+        "$ref": "#/$defs/NonEmptyString"
+      },
+      "maxItems": 16,
+      "title": "Desires",
+      "type": "array"
+    },
+    "fears": {
+      "items": {
+        "$ref": "#/$defs/NonEmptyString"
+      },
+      "maxItems": 16,
+      "title": "Fears",
+      "type": "array"
+    },
+    "generation": {
+      "minimum": 1,
+      "title": "Generation",
+      "type": "integer"
+    },
+    "id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "owner_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "persona_summary": {
+      "maxLength": 600,
+      "minLength": 1,
+      "title": "Persona Summary",
+      "type": "string"
+    },
+    "protected_values": {
+      "items": {
+        "$ref": "#/$defs/NonEmptyString"
+      },
+      "maxItems": 32,
+      "title": "Protected Values",
+      "type": "array",
+      "uniqueItems": true
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "source_references": {
+      "items": {
+        "$ref": "#/$defs/NonEmptyString"
+      },
+      "maxItems": 32,
+      "minItems": 1,
+      "title": "Source References",
+      "type": "array"
+    },
+    "taboos": {
+      "items": {
+        "$ref": "#/$defs/NonEmptyString"
+      },
+      "maxItems": 16,
+      "title": "Taboos",
+      "type": "array"
+    },
+    "traits": {
+      "additionalProperties": {
+        "maximum": 1.0,
+        "minimum": -1.0,
+        "type": "number"
+      },
+      "maxProperties": 32,
+      "title": "Traits",
+      "type": "object"
+    },
+    "values": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "maxProperties": 32,
+      "title": "Values",
+      "type": "object"
+    },
+    "world_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    }
+  },
+  "required": [
+    "id",
+    "world_id",
+    "owner_id",
+    "agent_id",
+    "generation",
+    "traits",
+    "values",
+    "persona_summary",
+    "source_references",
+    "created_at",
+    "content_hash",
+    "schema_version"
+  ],
+  "title": "IdentityBaseline",
+  "type": "object"
+}

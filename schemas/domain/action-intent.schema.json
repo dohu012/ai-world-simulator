@@ -8,7 +8,14 @@
         "move",
         "speak",
         "wait",
-        "custom"
+        "custom",
+        "acquire_resource",
+        "transfer_resource",
+        "consume_resource",
+        "help_character",
+        "queue_for_service",
+        "attempt_route",
+        "abandon_plan"
       ],
       "title": "ActionType",
       "type": "string"

@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     model_max_attempts: int = 2
     model_max_output_tokens: int = 300
     world_runtime_enabled: bool = False
+    study_enrollment_enabled: bool = False
+    study_admin_key: str | None = None
 
 
 @lru_cache

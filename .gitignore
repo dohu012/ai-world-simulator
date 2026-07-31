@@ -11,5 +11,8 @@ node_modules/
 .next/
 *.tsbuildinfo
 coverage/
+frontend/test-results/
+frontend/playwright-report/
+backend/pytest-cache-task20/
 *.log
 .DS_Store

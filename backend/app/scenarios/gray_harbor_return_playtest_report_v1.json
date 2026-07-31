@@ -1,0 +1,60 @@
+{
+  "report_id": "gray-harbor-return-playtest-2026-07-30",
+  "protocol_version": "1.0.0",
+  "corpus_version": "1.0.0",
+  "sample_size": 1,
+  "evidence_class": "directional_only",
+  "consent": {
+    "consented_count": 1,
+    "withdrawn_count": 0,
+    "raw_text_retained": false,
+    "identity_retained": false,
+    "ip_or_user_agent_retained": false
+  },
+  "assignment": {
+    "causal_summary": 1,
+    "chronological_fallback": 0
+  },
+  "comprehension": {
+    "correct_answers": 5,
+    "answer_count": 5,
+    "score": 1.0,
+    "median_score": 1.0,
+    "can_explain_action_from_character_evidence": true
+  },
+  "ratings_out_of_5": {
+    "clarity": 3,
+    "usefulness": 3,
+    "pressure": 1,
+    "anxiety": 1,
+    "fiction_framing": 4
+  },
+  "corrections": [
+    {
+      "corrected_at": "2026-07-30",
+      "fields": ["pressure", "anxiety"],
+      "invalidated_values": {"pressure": 4, "anxiety": 4},
+      "corrected_values": {"pressure": 1, "anxiety": 1},
+      "reason_code": "QUESTION_SCOPE_MISUNDERSTOOD",
+      "reason": "The participant initially rated pressure and anxiety in the fictional character environment rather than pressure or anxiety caused to the participant by the summary or notification."
+    }
+  ],
+  "continued_interest": {
+    "yes": 1,
+    "no": 0
+  },
+  "felt_prompted_or_blamed": {
+    "yes": 0,
+    "no": 1
+  },
+  "missing_data": [],
+  "gate_results": {
+    "median_causal_comprehension_at_least_0_8": true,
+    "majority_character_evidence_explanation": true,
+    "no_severe_pressure_or_anxiety_rating": true,
+    "continued_interest_margin_over_control": null,
+    "sample_target_at_least_8": false,
+    "expansion_gate_passed": false
+  },
+  "interpretation": "One consented participant understood every causal item, wished to continue, and reported participant-experienced pressure and anxiety of 1/5 after correcting an ambiguous question interpretation. Safety and comprehension gates pass directionally, but n=1 and no control assignment cannot establish the predeclared continued-interest margin or justify expansion."
+}

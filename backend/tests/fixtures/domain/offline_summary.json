@@ -1,0 +1,31 @@
+{
+  "id": "summary-day-seven",
+  "owner_id": "char-chen-mo",
+  "world_id": "gray-harbor",
+  "interval_start": "2026-07-06T08:00:00Z",
+  "interval_end": "2026-07-08T08:00:00Z",
+  "source_watermark": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "claims": [
+    {
+      "id": "claim-rescue",
+      "owner_id": "char-chen-mo",
+      "world_id": "gray-harbor",
+      "source_type": "action_result",
+      "source_id": "scenario-rescue",
+      "source_version": "1.0.0",
+      "source_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "occurred_at": "2026-07-07T08:00:00Z",
+      "visible_at": "2026-07-07T08:01:00Z",
+      "epistemic_class": "outcome",
+      "text": "Ten rescue seats were allocated.",
+      "agent_id": "char-chen-mo",
+      "corrects_claim_id": null,
+      "importance": 1.0,
+      "schema_version": "1.0"
+    }
+  ],
+  "narrative": ["[outcome] Ten rescue seats were allocated."],
+  "lifecycle": "ready",
+  "compiler_version": "causal-compiler-v1",
+  "schema_version": "1.0"
+}

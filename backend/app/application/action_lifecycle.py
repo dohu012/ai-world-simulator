@@ -85,6 +85,7 @@ class GrayHarborActionService:
             schema_version=observer.world.schema_version,
         )
         state: MoveState | None = None
+        scenario_state = None
         if intent.action_type is ActionType.MOVE:
             try:
                 state = await self.repository.lock_move_state(WORLD_ID, agent_id)
@@ -96,8 +97,12 @@ class GrayHarborActionService:
             if concurrent is not None:
                 await self.repository.rollback()
                 return self._read(concurrent, True)
+        elif intent.action_type not in {ActionType.WAIT, ActionType.SPEAK, ActionType.CUSTOM}:
+            affordance_id = intent.parameters.get("affordance_id")
+            if isinstance(affordance_id, str):
+                scenario_state = await self.repository.lock_scenario_action_state(affordance_id)
 
-        validation = self.validator.validate(intent, state)
+        validation = self.validator.validate(intent, state, scenario_state)
         if validation.accepted and validation.move is not None and state is not None:
             witnesses = await self.repository.destination_witness_ids(
                 WORLD_ID, agent_id, validation.move.target_location_id
@@ -106,7 +111,8 @@ class GrayHarborActionService:
         adjudication = self.engine.adjudicate(intent, validation, state)
         observations = (
             self.observation_builder.build_for_events([adjudication.event], observer.characters)
-            if adjudication.event is not None and intent.action_type is ActionType.MOVE
+            if adjudication.event is not None
+            and (intent.action_type is ActionType.MOVE or validation.scenario_action is not None)
             else []
         )
         try:

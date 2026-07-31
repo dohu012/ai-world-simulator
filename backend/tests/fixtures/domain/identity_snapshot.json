@@ -1,0 +1,17 @@
+{
+  "id": "identity-chen-v2",
+  "baseline_id": "baseline-chen-1",
+  "world_id": "gray-harbor",
+  "owner_id": "chen",
+  "agent_id": "chen",
+  "version": 2,
+  "offsets": {"caution": 0.08, "confidence": -0.04},
+  "confidence": 0.7,
+  "persona_summary": "Chen has become slightly more cautious after repeated independent supply failures.",
+  "evidence_horizon": "2026-07-28T00:00:00Z",
+  "policy_version": "evolution-policy-v1",
+  "previous_snapshot_id": "identity-chen-v1",
+  "lifecycle": "active",
+  "content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+  "schema_version": "1.0"
+}

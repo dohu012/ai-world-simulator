@@ -15,10 +15,27 @@ class MoveMutationPlan:
 
 
 @dataclass(frozen=True)
+class ResourceMutationLeg:
+    account_id: str
+    delta_available: int
+    delta_consumed: int = 0
+
+
+@dataclass(frozen=True)
+class ScenarioMutationPlan:
+    operation: str
+    resource_id: str | None = None
+    amount: int = 0
+    legs: tuple[ResourceMutationLeg, ...] = ()
+    plan_id: str | None = None
+    plan_status: str | None = None
+
+
+@dataclass(frozen=True)
 class Adjudication:
     result: ActionResult
     event: WorldEvent | None = None
-    mutation: MoveMutationPlan | None = None
+    mutation: MoveMutationPlan | ScenarioMutationPlan | None = None
 
 
 class GrayHarborWorldEngine:
@@ -106,6 +123,51 @@ class GrayHarborWorldEngine:
             )
             return Adjudication(result, event, MoveMutationPlan(character, world))
 
+        if validation.scenario_action is not None:
+            affordance = validation.scenario_action.affordance_id
+            mutation = self._scenario_mutation(affordance)
+            event_id = intent.id.replace("intent-", "event-", 1)
+            event = WorldEvent(
+                id=event_id,
+                world_id=intent.world_id,
+                event_type=EventType.STATE_CHANGED,
+                title="Authoritative scenario action",
+                description=f"The world accepted {intent.action_type.value}.",
+                occurred_at=intent.submitted_at,
+                location_id=None,
+                participant_ids=[intent.actor_id],
+                fact_ids=[],
+                source_action_id=intent.id,
+                visibility=FactVisibility.RESTRICTED,
+                correlation_id=intent.correlation_id,
+                metadata={
+                    "engine": "gray-harbor-seven-day-v1",
+                    "action": intent.action_type.value,
+                    "affordance_id": affordance,
+                },
+                schema_version=intent.schema_version,
+                created_at=intent.submitted_at,
+            )
+            change = StateChange(
+                entity_type="scenario",
+                entity_id="gray-harbor-seven-day",
+                field="last_action",
+                old_value=None,
+                new_value=intent.action_type.value,
+            )
+            return Adjudication(
+                self._result(
+                    intent,
+                    result_id,
+                    ActionStatus.SUCCEEDED,
+                    validation,
+                    [change],
+                    [event.id],
+                ),
+                event,
+                mutation,
+            )
+
         event_id = intent.id.replace("intent-", "event-", 1)
         event = WorldEvent(
             id=event_id,
@@ -128,6 +190,57 @@ class GrayHarborWorldEngine:
             self._result(intent, result_id, ActionStatus.SUCCEEDED, validation, events=[event.id]),
             event,
         )
+
+    @staticmethod
+    def _scenario_mutation(affordance: str) -> ScenarioMutationPlan | None:
+        mutations = {
+            "gh-v1:consume-medicine": ScenarioMutationPlan(
+                operation="consume",
+                resource_id="resource-medicine",
+                amount=1,
+                legs=(ResourceMutationLeg("account-clinic-medicine", -1, 1),),
+            ),
+            "gh-v1:transfer-food": ScenarioMutationPlan(
+                operation="transfer",
+                resource_id="resource-food",
+                amount=4,
+                legs=(
+                    ResourceMutationLeg("account-store-food", -4),
+                    ResourceMutationLeg("account-sun-food", 4),
+                ),
+            ),
+            "gh-v1:help-luo": ScenarioMutationPlan(
+                operation="transfer",
+                resource_id="resource-food",
+                amount=2,
+                legs=(
+                    ResourceMutationLeg("account-store-food", -2),
+                    ResourceMutationLeg("account-luo-food", 2),
+                ),
+            ),
+            "gh-v1:abandon-store-plan": ScenarioMutationPlan(
+                operation="abandon_plan",
+                plan_id="plan-chen-supplies",
+                plan_status="abandoned",
+            ),
+            "gh-v1:allocate-rescue-seats": ScenarioMutationPlan(
+                operation="consume",
+                resource_id="resource-rescue-seat",
+                amount=10,
+                legs=(ResourceMutationLeg("account-rescue-seats", -10, 10),),
+            ),
+            "gh-v1:complete-triage": ScenarioMutationPlan(
+                operation="complete_plan",
+                plan_id="plan-lin-triage",
+                plan_status="completed",
+            ),
+            "gh-v1:route-clinic": ScenarioMutationPlan(
+                operation="complete_plan",
+                plan_id="plan-zhou-rescue",
+                plan_status="completed",
+            ),
+        }
+        return mutations.get(affordance)
 
     @staticmethod
     def _result(

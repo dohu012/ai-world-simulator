@@ -1,7 +1,7 @@
 """Auditable Observation-only decision orchestration."""
 
 import json
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Sequence
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 from typing import Any
@@ -17,11 +17,14 @@ from app.application.action_lifecycle import (
     DemoActionSubmission,
     GrayHarborActionService,
 )
+from app.application.evolution_service import EvolutionApplicationService
 from app.application.gray_harbor import (
     WORLD_ID,
     GrayHarborReadService,
 )
+from app.application.memory_service import MemoryApplicationService, RetrievalRead
 from app.domain.enums import ActionType
+from app.infrastructure.database import memory_models as mr
 from app.infrastructure.database import models as r
 from app.model_gateway.contracts import (
     AgentDecisionProposal,
@@ -61,6 +64,9 @@ class AgentDecisionReadModel(BaseModel):
     idempotent_replay: bool
     observation_watermark: str
     observation_ids: list[str]
+    evolution_context_watermark: str
+    identity_version: int
+    relationship_versions: dict[str, int]
     prompt_version: str
     prompt_hash: str
     schema_version: str
@@ -125,7 +131,18 @@ class AgentDecisionApplicationService:
             x.id
             for x in sorted(input_model.observations, key=lambda x: (x.observed_at, x.id))[-32:]
         ]
-        watermark = sha256(json.dumps(observation_ids, separators=(",", ":")).encode()).hexdigest()
+        memory_context = await self._memory_context(
+            agent_id,
+            datetime.fromisoformat(input_model.world.current_time),
+            input_model.observations,
+            trace_key=decision_id,
+        )
+        evolution_context, evolution_watermark = await EvolutionApplicationService(
+            self.sessions
+        ).context(agent_id)
+        watermark = self._input_watermark(
+            observation_ids, memory_context.context_watermark, evolution_watermark
+        )
         affordances: list[dict[str, Any]] = [{"id": "wait", "action": "wait", "parameters": {}}]
         affordances += [
             {
@@ -147,6 +164,8 @@ class AgentDecisionApplicationService:
             "observations": [x.model_dump(mode="json") for x in input_model.observations],
             "observation_ids": observation_ids,
             "observation_watermark": watermark,
+            "memory_context": memory_context.model_dump(mode="json"),
+            "evolution_context": evolution_context,
             "affordances": affordances,
         }
         schema = AgentDecisionProposal.model_json_schema()
@@ -180,6 +199,11 @@ class AgentDecisionApplicationService:
                     input_payload={
                         "observation_ids": observation_ids,
                         "observation_watermark": watermark,
+                        "memory_context_watermark": memory_context.context_watermark,
+                        "evolution_context_watermark": evolution_watermark,
+                        "evolution_context": evolution_context,
+                        "retrieval_id": memory_context.id,
+                        "decision_id": decision_id,
                         "prompt_version": PROMPT_VERSION,
                         "prompt_hash": prompt_hash,
                         "schema_version": "1",
@@ -188,6 +212,9 @@ class AgentDecisionApplicationService:
                     },
                 )
             )
+            retrieval = await session.get(mr.MemoryRetrievalRunRecord, memory_context.id)
+            if retrieval is not None:
+                retrieval.decision_id = decision_id
             try:
                 await session.commit()
             except IntegrityError:
@@ -386,7 +413,18 @@ class AgentDecisionApplicationService:
                 input_model.observations, key=lambda item: (item.observed_at, item.id)
             )[-32:]
         ]
-        watermark = sha256(json.dumps(observation_ids, separators=(",", ":")).encode()).hexdigest()
+        memory_context = await self._memory_context(
+            agent_id,
+            datetime.fromisoformat(input_model.world.current_time),
+            input_model.observations,
+            trace_key=str(input_payload.get("decision_id", "freshness-check")),
+        )
+        evolution_context, evolution_watermark = await EvolutionApplicationService(
+            self.sessions
+        ).context(agent_id)
+        watermark = self._input_watermark(
+            observation_ids, memory_context.context_watermark, evolution_watermark
+        )
         safe_input = {
             "input_version": INPUT_VERSION,
             "world": input_model.world.model_dump(mode="json"),
@@ -395,12 +433,55 @@ class AgentDecisionApplicationService:
             "observations": [item.model_dump(mode="json") for item in input_model.observations],
             "observation_ids": observation_ids,
             "observation_watermark": watermark,
+            "memory_context": memory_context.model_dump(mode="json"),
+            "evolution_context": evolution_context,
             "affordances": input_payload.get("affordances", []),
         }
         return (
             json.dumps(safe_input, sort_keys=True, separators=(",", ":"), ensure_ascii=False),
             watermark,
         )
+
+    async def _memory_context(
+        self,
+        agent_id: str,
+        cutoff: datetime,
+        observations: Sequence[BaseModel],
+        *,
+        trace_key: str,
+    ) -> RetrievalRead:
+        service = MemoryApplicationService(self.sessions)
+        await service.sync_observations()
+        query = json.dumps(
+            [item.model_dump(mode="json") for item in observations[-8:]],
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )[:2000]
+        return await service.retrieve_for_owner(
+            agent_id,
+            query=query,
+            cutoff=cutoff,
+            final_k=6,
+            trace_key=trace_key,
+        )
+
+    @staticmethod
+    def _input_watermark(
+        observation_ids: list[str],
+        memory_watermark: str,
+        evolution_watermark: str,
+    ) -> str:
+        return sha256(
+            json.dumps(
+                {
+                    "observations": observation_ids,
+                    "memory_context": memory_watermark,
+                    "evolution_context": evolution_watermark,
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
+        ).hexdigest()
 
     async def _claim_is_current(self, decision_id: str, token: int) -> bool:
         async with self.sessions() as session:
@@ -471,6 +552,12 @@ class AgentDecisionApplicationService:
                 else None
             )
         inp, out = row.input_payload, row.outcome_payload or {}
+        evolution = inp.get("evolution_context")
+        evolution_payload = evolution if isinstance(evolution, dict) else {}
+        identity = evolution_payload.get("identity")
+        identity_payload = identity if isinstance(identity, dict) else {}
+        relationships = evolution_payload.get("relationships")
+        relationship_payloads = relationships if isinstance(relationships, list) else []
         return AgentDecisionReadModel(
             decision_id=row.id,
             status=row.status,
@@ -479,6 +566,13 @@ class AgentDecisionApplicationService:
             observation_ids=[str(value) for value in inp["observation_ids"]]
             if isinstance(inp["observation_ids"], list)
             else [],
+            evolution_context_watermark=str(inp.get("evolution_context_watermark", "")),
+            identity_version=int(identity_payload.get("version", 1)),
+            relationship_versions={
+                f"{item.get('target_type')}:{item.get('target_id')}": int(item.get("version", 1))
+                for item in relationship_payloads
+                if isinstance(item, dict)
+            },
             prompt_version=str(inp["prompt_version"]),
             prompt_hash=str(inp["prompt_hash"]),
             schema_version=str(inp["schema_version"]),

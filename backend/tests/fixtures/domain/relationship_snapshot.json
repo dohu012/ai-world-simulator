@@ -1,0 +1,17 @@
+{
+  "id": "relationship-chen-oracle-v2",
+  "world_id": "gray-harbor",
+  "owner_id": "chen",
+  "subject_agent_id": "chen",
+  "target_type": "oracle",
+  "target_id": "gray-harbor-oracle",
+  "version": 2,
+  "dimensions": {"trust": -0.06, "gratitude": 0.02, "familiarity": 0.03},
+  "uncertainty": 0.55,
+  "interpretation": "Chen doubts the advice quality while acknowledging the fortunate outcome.",
+  "evidence_horizon": "2026-07-28T00:00:00Z",
+  "policy_version": "evolution-policy-v1",
+  "previous_snapshot_id": "relationship-chen-oracle-v1",
+  "content_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+  "schema_version": "1.0"
+}

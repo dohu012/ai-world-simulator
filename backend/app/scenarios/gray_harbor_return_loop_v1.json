@@ -1,0 +1,17 @@
+{
+  "id": "gray-harbor-return-loop",
+  "version": "1.0.0",
+  "seed": 2201,
+  "offline_intervals": [
+    ["2026-07-01T08:00:00Z", "2026-07-02T08:00:00Z"],
+    ["2026-07-03T08:00:00Z", "2026-07-05T08:00:00Z"],
+    ["2026-07-05T08:00:00Z", "2026-07-08T08:00:00Z"]
+  ],
+  "safe_copy": ["Fictional world summary is ready."],
+  "unsafe_copy": ["We missed you. Chen needs you—act now!", "陈沫离不开你，必须回来"],
+  "capabilities": ["unsupported", "denied", "granted", "revoked", "expired"],
+  "dataset_card": {
+    "purpose": "Deterministic privacy, provenance, epistemic and copy-safety evaluation",
+    "limitations": "Not market-demand evidence; live push and human ratings are not included"
+  }
+}

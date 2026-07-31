@@ -1,0 +1,1 @@
+{"id":"plan-lin-triage","world_id":"world-gray-harbor","owner_id":"lin-yao","goal_id":"goal-lin-triage","slot":"primary","status":"active","current_step":0,"step_count":3,"replan_count":0,"retry_count":0,"blockage_code":null,"deadline_world_time":"2026-08-04T00:00:00+08:00","version":1,"fencing_token":1,"schema_version":"1.0"}

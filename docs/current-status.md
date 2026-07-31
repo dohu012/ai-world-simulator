@@ -1,6 +1,6 @@
 # 当前状态
 
-当前阶段：TASK-014 已完成；TASK-015 已规划。
+当前阶段：TASK-019 已完成；TASK-020 已规划。
 
 已完成内容：
 
@@ -140,3 +140,403 @@ TASK-018 is complete. Gray Harbor now has deterministic direct, bulletin, and di
 ## Next Planned Task: TASK-019
 
 TASK-019 will turn the completed information-propagation milestone into a seven-day Gray Harbor internal-playtest slice: exactly 30 tiered residents, durable goals and plans, contested food/medicine/capacity, at least five narrow authoritative action types, hard and conditional events, reproducible uncertain adjudication, and a consequential Day-7 outcome. Before implementation it requires a dated ADR and executable spikes comparing discrete-event simulation, plan/rule engines, resource ledgers, deterministic RNG, tiered population simulation, and behavior evaluation. Long-term vector memory, production notifications, free world creation, and 30 independent LLM Agents remain deferred until this fixed-world fate loop is engaging, explainable, private, restart-safe, and cost-bounded.
+
+## TASK-019 Foundation Update
+
+TASK-018 baseline is 113 passing and 18 opt-in infrastructure tests skipped in
+1.48 seconds. ADR-012 selects the existing PostgreSQL runtime, typed finite-state
+policies, normalized balances plus append-only ledgers, SHA-256-derived
+adjudication, deterministic resident schedules, and pytest/replay evaluation with
+no new production dependency.
+
+The versioned `gray-harbor-seven-day` 1.0.0 fixture freezes exactly 30 residents,
+three L3 Agents, initial food/water/medicine and capacities, and the seven daily
+scenario events. Production pure policies and executable spikes now cover stable
+equal-time ordering, final-unit exclusion, exact-once retry, one-shot Day-5
+conditions, bounded plan termination, restart-stable uncertain outcomes, zero-LLM
+ordinary residents, and removal seams. TASK-019 remains in progress: normalized
+persistence and constraints are the next implementation stage.
+
+## TASK-019 Implementation Update
+
+Migration `20260728_0008` adds normalized resource definitions/accounts/ledger,
+goals/plans, conditional events, adjudication traces, and a persisted scenario
+checkpoint. Explicit reset and row-locked bounded advance survive API process
+restart. Observer and header-derived owner APIs expose the seven-day state without
+copying other owners' plans/actions or future outcomes into the owner view.
+
+Six server-offered scenario action types now traverse the existing ActionIntent,
+Action Validator, World Engine, ActionResult, WorldEvent, Observation, and replay
+path. Affordances bind action type and actor; forged, cross-actor, and hidden-cache
+attempts reject with stable codes. The internal-playtest panel supports reset,
+single-day advance, resource inspection, plan blockage/completion, typed action
+failures, and Day-7 irreversible outcomes.
+
+Migrations `0008` and `0009` now pass downgrade to `20260727_0007`, upgrade to
+head, and drift checks on PostgreSQL. Reset persists exactly 30 residents, three L3
+Agents, four deterministic schedule templates, initial resources, goals, plans,
+and a fenced scenario generation. Only the existing runtime advances days.
+
+Runtime progression automatically submits seven versioned server affordances
+through the existing action lifecycle. Resource source accounts and plans are
+locked before validation; accepted consumption/transfer/help effects update
+versioned accounts and append per-leg ledger records in the same transaction as
+ActionResult, event, Observation, and replay. A full seven-day PostgreSQL run,
+including a Day-4 service reconstruction, ends with seven persisted actions,
+conserved transfers, medicine consumption, Chen's abandoned plan, Day-7 outcomes,
+and zero ordinary-resident model calls. Running the scenario integration suite
+twice proves reset-generation fencing and same-generation idempotency.
+
+Current gates pass 179 infrastructure-enabled backend tests and 34 frontend tests
+plus Ruff, mypy,
+schema check, TypeScript, ESLint, Prettier, production build, and Alembic drift.
+TASK-019 is complete. Day-5 shipment stop is a persisted one-shot condition that
+atomically emits one event and owner-safe Observations. Day-7 rescue seats are a
+capacity-10 resource: two concurrent PostgreSQL sessions produce exactly one
+successful allocation and one `RESOURCE_INSUFFICIENT` rejection, leaving
+available 0 and consumed 10. Persisted final plan states are Lin `completed`,
+Zhou `completed`, and Chen `abandoned`.
+
+Final gates: 182 infrastructure-enabled backend tests; 34 frontend tests; Ruff,
+mypy, schema export, TypeScript, ESLint, Prettier, Next.js production build;
+reversible `0007 -> 0008 -> 0009 -> 0007 -> head`; and clean Alembic drift.
+
+## Next Planned Task: TASK-020
+
+TASK-020 will implement the first auditable long-term memory and continuity
+evaluation milestone. TASK-019 now provides seven days of importance-bearing
+history, but the current Agent decision path has no persisted memories, embeddings,
+hybrid retrieval, bounded memory context, or recall/privacy evaluation.
+
+Before implementation, TASK-020 requires a dated ADR and executable, Gray
+Harbor-shaped comparison of PostgreSQL/pgvector exact and approximate search,
+PostgreSQL lexical search, dedicated vector stores, embedding options, memory
+frameworks, ranking/reranking methods, and evaluation tools. The planned slice
+includes typed episodic/semantic/emotional/Oracle memories, immutable provenance,
+asynchronous versioned embeddings, hard owner/world/time filtering, auditable
+hybrid scoring, lexical fallback, bounded prompt assembly, decision freshness,
+consolidation, replay/UI, and a fixed Day-1-through-Day-7 continuity corpus with
+zero forbidden-memory exposure.
+
+Production push/email, free world creation, automatic personality or relationship
+mutation, and a dedicated vector service are not preselected. TASK-021 will be
+chosen from measured memory-aware playtest, recall, executability, return, privacy,
+latency, and cost evidence.
+
+## TASK-020 Foundation Update
+
+ADR-013 selects PostgreSQL as canonical memory/audit storage, structured plus
+lexical retrieval as the outage-safe baseline, exact cosine search as the vector
+correctness baseline, and small internal writer/retriever ports. Approximate search
+remains disabled until its owner-filtered recall gate passes.
+
+Strict episodic, semantic, emotional, Oracle, and stage-summary contracts now
+enforce bounded text, time order, finite vectors, and same-owner/same-world
+provenance. Their deterministic JSON Schemas are exported. Migration
+`20260728_0010` adds normalized immutable memory/source records, revisioned
+embeddings, fenced embedding jobs, retrieval runs, and per-candidate score traces.
+The migration passes `0009 -> 0010 -> 0009 -> 0010` and Alembic drift.
+
+Pure policies implement versioned importance admission, deterministic offline fake
+embeddings, pre-ranking owner/world/time/type filters, transparent weighted hybrid
+scores, stable tie-breaking, whole-record context budgets, diversity exclusions,
+lexical fallback, and a memory-aware freshness watermark. The initial
+`gray-harbor-memory-eval` 1.0.0 corpus declares required and forbidden memories for
+Lin, Chen, and Zhou. Backend regression is 181 passed and 21 opt-in infrastructure
+tests skipped.
+
+TASK-020's completed source-to-memory runtime pipeline admits
+episodic, semantic, emotional, and Oracle projections exactly once; a fenced
+two-worker deterministic embedding path, hybrid/lexical retrieval traces, bounded
+stage consolidation, owner APIs, offline evaluation API, and the first frontend
+memory/evaluation surface are implemented. TASK-016 prompts carry selected memory
+context and reject a proposal when either its Observation or memory watermark
+changes after inference.
+
+PostgreSQL integration proves 34 admitted memories from the current 226
+owner-visible Observation records, zero new records on repeat projection, 34
+unique embeddings across two workers, owner-isolated retrieval, and idempotent
+consolidation without raw-memory deletion. Targeted memory plus decision recovery
+passes 12 tests; the default backend suite passes 182 with 23 infrastructure tests
+skipped. Frontend passes 34 tests, typecheck, lint, format, and production build.
+
+Embedding provider calls now execute after the claim transaction closes.
+Timeout/rate-limit/unavailable failures classify as transient with bounded
+deterministic retry; invalid/permanent failures dead-letter, and stale worker
+results must still match owner and fencing token. A PostgreSQL test opens a second
+`FOR UPDATE` session during the provider callback, proving the provider runs
+without retaining the embedding-job lock. Retrieval continues in
+`lexical_structured_fallback` mode during the outage.
+
+Observer replay decisions now expose only retrieval ID/mode, selected memory IDs,
+bounded character use, and the context watermark; they do not expose vectors, raw
+prompts, or provider payloads. The Replay Inspector renders that bounded decision
+memory context.
+
+TASK-020 is complete. The versioned corpus now executes the production ranking and
+packing code in both hybrid and embedding-outage fallback modes instead of
+returning prewritten result rows. Both modes achieve required recall@k 1.0 and
+zero forbidden exposure on all three fixed cases. The owner UI shows every latest
+candidate's rank, selected/excluded state, total/lexical/semantic score, retrieval
+mode, and character budget.
+
+Oracle memories link the delivered advice Observation and Oracle window, plus the
+subsequent decision action and generated authoritative outcome when available.
+Replay exposes bounded retrieval metadata without vectors, raw prompts, or
+provider payloads.
+
+The TASK-019 reset-generation scan now includes every persisted
+`scenario-gN-*` ActionIntent key, fixing repeat runs that previously replayed a
+stale test action. The seven-day integration suite passes twice consecutively, and
+the complete infrastructure-enabled backend suite passes 212 tests on the reused
+PostgreSQL database.
+
+The current PostgreSQL image reports the `vector` extension unavailable.
+ADR-013 therefore keeps approximate pgvector search disabled and uses the selected
+exact deterministic vector plus structured/lexical baseline. This is an explicit
+deployment limitation, not silent fallback; extension activation remains
+conditional on a future image providing pgvector and filtered recall@12 >= 0.99.
+
+Final gates: 212 infrastructure-enabled backend tests; 34 frontend tests; Ruff,
+Ruff format, mypy, schema export, TypeScript, ESLint, Prettier, Next.js production
+build, reversible `0009 -> 0010 -> 0009 -> 0010`, and clean Alembic drift.
+
+## Next Planned Task: TASK-021
+
+TASK-021 is planned as **Auditable Identity, Relationship, and Oracle-Trust
+Evolution**. The choice follows TASK-020's evidence-based branch: memory recall,
+privacy, provenance, and fallback gates now pass, but traits and relationships
+remain static and recalled experience has no bounded, versioned long-term effect
+on behavior.
+
+The task requires research of maintained open-source personality/role-continuity
+evaluation, affect/appraisal, graph/relationship, policy, workflow, and evaluation
+libraries before ADR-014 selects an architecture. It preserves immutable identity
+baselines and World Engine authority; model output may only propose evidence-linked
+deltas that code validates for ownership, time, caps, cooldowns, invariants,
+freshness, and safety.
+
+The vertical slice adds asymmetric Agent relationships, non-mechanical Oracle
+reply/silence/advice/outcome assessment, exactly-once reflection, decision
+freshness, causal replay, owner-safe APIs/UI, and a fixed 30-plus-decision Gray
+Harbor corpus. Required gates include zero unsupported committed mutations, zero
+forbidden evidence exposure, preserved core personality, calibrated Oracle
+obedience, bounded dependence, deterministic fallback, and restart/two-worker
+proof. Notifications and free world creation remain deferred until this defining
+character-continuity risk is validated.
+
+## TASK-021 Completion
+
+TASK-021 is complete. ADR-014 selects immutable authored identity baselines,
+bounded derived overlays, PostgreSQL directional edges, repository-native
+Pydantic/pure-function policy, and the existing fenced-job architecture. Model
+output remains untrusted; the completed vertical slice uses deterministic fallback
+interpretation and code-owned owner/world/time/freshness/range/cap checks.
+
+Migration `20260728_0011` adds baselines, identity and relationship histories,
+reflection jobs, per-dimension decisions, and evidence links. It passes
+`0010 -> 0011 -> 0010 -> 0011` and clean Alembic drift. Scenario reset removes
+all derived evolution rows in dependency-safe order while preserving authored
+world history.
+
+TASK-020 memories now drive exactly-once reflection. Identity changes require two
+independent evidence keys, cap at 0.08 per event and 0.30 cumulatively.
+Relationship updates are directional, cap at 0.15 per event and 0.30 per world
+day, with dependence capped at 0.45. Low-urgency silence causes no mechanical
+trust loss; advice quality, independent choice, material outcome, luck, urgency,
+contact possibility, and value conflict remain separate inputs.
+
+Agent decisions persist and hash the exact identity version and relevant
+relationship versions. A relevant projection update changes the decision input
+watermark and triggers the existing stale-input rejection; replay and the owner
+UI display the historical selected versions without exposing raw prompts,
+provider payloads, vectors, or hidden reasoning.
+
+The project-owned `gray-harbor-evolution-eval:1.0.0` corpus reports zero
+unsupported commits, forbidden exposure, routine drift, and directionality
+errors; all three L3 Agents have 30 deterministic later decisions. Oracle trials
+include follow, reject, and partial-follow classes, and maximum dependence remains
+0.45. Static consistency is 0.866667 and bounded evolved consistency is 0.955556.
+
+Final gates: 230 infrastructure-enabled backend tests; 35 frontend tests; Ruff,
+Ruff format, strict mypy, schema export, TypeScript, ESLint, Prettier, Next.js
+production build, reversible migration, and clean Alembic drift.
+
+TASK-021's deterministic evidence does not yet justify unrestricted external
+notifications or free world creation. The next task must first build and test the
+conservative in-site/offline return loop; broader dialogue remains a later branch
+if playtests find stored relationship changes credible but insufficiently legible.
+
+## Next Planned Task: TASK-022
+
+TASK-022 is planned as **Instrumented Offline Return Loop, Safe Notifications,
+and Narrative Continuity**. The 41-page product plan was reread page by page
+against TASK-021's completion evidence. The largest remaining MVP risk is whether
+a player returning to an autonomously advanced world can understand what mattered
+and continue following an uncontrollable Agent without noisy, privacy-leaking,
+guilt-based, or dependence-amplifying notifications.
+
+The task completes the missing Stage-1 deliverables: an owner-scoped in-site
+inbox, versioned offline intervals and causal summaries, preferences/quiet
+hours/caps/aggregation, replay and cost/debug surfaces, privacy-minimized internal
+playtest instrumentation, and optional Web Push that stays disabled until
+explicit opt-in, security, copy-safety, and real-browser gates pass. The full
+in-site experience must work when push is unsupported, denied, revoked, or down.
+
+Before implementation, TASK-022 requires a dated ADR and executable research of
+Next.js/native PWA approaches, service workers, Web Push libraries/VAPID,
+PostgreSQL/Redis/Temporal delivery, deterministic versus model-assisted summaries,
+anti-manipulation policy, privacy-safe analytics, browser automation, and human
+comprehension/safety evaluation. Free world creation remains deferred until the
+fixed Gray Harbor return loop produces credible player evidence rather than only
+deterministic system metrics.
+
+## TASK-022 Foundation Update
+
+ADR-015 selects a repository-owned deterministic causal compiler, conservative
+code-owned notification policy, the existing PostgreSQL fenced/outbox architecture
+for future durable delivery, native App Router manifest, and a minimal
+same-origin service worker. No new production dependency was introduced.
+
+The implemented policy preserves objective/observed/believed/decided/outcome/
+memory/relationship/unknown distinctions; validates owner, world, occurrence and
+visibility bounds; hashes exact source versions; rejects coercive/fake-urgency
+copy in English and Chinese; and enforces follow scope, channel consent, daily
+caps, pause, expiry, timezone/DST quiet deferral, and no-push defaults.
+
+An owner-scoped no-store demo endpoint and accessible return panel show one
+source-linked fictional summary item, inclusion reasons, and zero-provider-call
+debug data. The native manifest builds successfully. The service worker imports
+nothing, uses redacted lock-screen copy and a fixed same-origin route, and remains
+disabled by a kill switch. Minimized instrumentation accepts only declared event
+codes behind caller identity and CSRF checks.
+
+Current deterministic gates: backend 215 passed and 25 opt-in infrastructure
+tests skipped; Ruff, formatting and strict mypy pass. Frontend 35 tests,
+TypeScript, ESLint, Prettier, and production build pass.
+
+Migration `20260728_0012` now adds normalized versioned notification preferences,
+offline intervals, summaries, immutable source claims, inbox lifecycle, and
+allowlisted playtest events. The durable projection uses stable logical keys and
+PostgreSQL uniqueness, survives repeat calls with exactly one inbox item and four
+source claims, isolates owner mutations, makes repeated read transitions no-ops,
+and deduplicates playtest events by idempotency key. Scenario reset deletes every
+new row in dependency order.
+
+The real database passes `0011 -> 0012 -> 0011 -> 0012` and clean Alembic drift.
+The complete infrastructure-enabled backend suite passes 243 tests. Frontend
+still passes 35 tests, TypeScript, ESLint, Prettier, and production build; it now
+registers the repository-owned worker and exposes browser permission only behind
+an explicit gesture, plus durable read/dismiss controls.
+
+TASK-022 remains in progress rather than being declared complete. Subscription
+secret storage/provider delivery and revoke fencing, HTTPS/VAPID real-browser Web
+Push tests, and a consented human playtest have not been executed. Push stays
+disabled, no human metrics are fabricated, and TASK-023 expansion remains
+unselected.
+
+## TASK-022 Browser Verification Update
+
+Playwright 1.62.0 and `pywebpush` 2.3.0 are now selected and installed after
+ADR-015 research. Downloading Playwright-managed Chromium/Firefox timed out twice,
+so the reproducible browser configuration uses the installed stable Google Chrome
+channel without weakening assertions. Two real-browser tests pass: the complete
+no-push causal summary renders with zero provider calls and the safe service
+worker reaches ready state; notification permission remains `default` without an
+automatic request and the only permission entry is a visible gesture control.
+
+The browser suite uses a fixed intercepted API fixture because Docker became
+unavailable later in the session; database behavior remains separately evidenced
+by the earlier 243-test infrastructure run and real return-loop integration test.
+This is not evidence of live provider delivery. A live subscription endpoint,
+VAPID send, revoke/expiry receipt matrix and multi-browser coverage remain open.
+
+## TASK-022 Completion
+
+TASK-022 is complete with an explicitly inconclusive expansion result. One
+consented internal participant completed the minimized causal-summary condition.
+No name, raw free text, IP, user agent, or browser fingerprint was retained.
+
+The participant answered all five causal-comprehension questions correctly
+(100%), identified the action as based on character knowledge and judgment,
+wished to continue following Chen Mo, and did not feel prompted or blamed.
+Clarity and usefulness were each 3/5 and fiction framing was 4/5. The participant
+initially entered pressure and anxiety as 4/5 while rating the fictional
+character's environment rather than the effect on the participant. After the
+question scope was clarified, both participant-experienced ratings were corrected
+to 1/5. The original values remain documented as invalidated rather than silently
+overwritten. With n=1, no chronological-control participant, and no confidence
+interval of practical value, the result is directional only and cannot establish
+an interest improvement.
+
+All deterministic privacy/provenance/copy/idempotency gates and the complete
+no-push experience pass. External Push is optional and remains disabled because
+live VAPID/provider/revoke/expiry and multi-browser evidence is incomplete.
+No TASK-023 feature-expansion branch is justified yet. Safety and comprehension
+pass directionally, so the next evidence step is a larger controlled return-loop
+playtest with unambiguous participant-directed rating wording. Creation, dialogue,
+action, and delivery expansion remain deferred; the no-push fallback remains.
+
+## Next Planned Task: TASK-023
+
+TASK-023 is planned as **Controlled Fixed-World Product Validation and Stage-2
+Expansion Gate**. The 41-page product and technical implementation plan was read
+page by page on 2026-07-30. Page 36 places world/character creation, event
+authoring, promotion, and conflict detection in Stage 2, while page 39 explicitly
+requires proving that fixed-world characters are worth following before building
+a large general editor.
+
+TASK-022 is directionally positive but cannot satisfy that gate with one
+participant and no chronological control. TASK-023 therefore builds a
+preregistered, privacy-minimized, reproducible multi-session study using
+counterbalanced causal-summary and chronological conditions over matched Gray
+Harbor intervals. It adds durable consent, opaque assignment, exact exposure
+versions, bounded responses and correction audit, withdrawal/deletion,
+participant-directed safety wording, a focused accessible playtest shell,
+small-sample analysis, and concrete nonfunctional probes for creation, promotion,
+dialogue, actions, and delivery demand.
+
+Before design, TASK-023 requires official/upstream research and executable
+comparisons of repository-native assignment/analytics versus maintained
+experiment and privacy analytics tools; accessible survey systems; statistical
+libraries and crossover methods; causal/fallback narrative layouts; accessibility
+automation; and local/hosted study deployment. ADR-016 must select the smallest
+architecture without session replay, fingerprinting, raw narrative capture, or
+engagement optimization.
+
+The target is at least 16 completed participants; fewer than 8 remains directional
+and cannot trigger expansion. TASK-023 may finish with a negative or inconclusive
+result. TASK-024 will be exactly one evidence-backed branch—creation, promotion,
+dialogue, actions, return-loop UX, or delivery—or an explicit decision to defer
+expansion.
+
+## TASK-023 Completion
+
+TASK-023 is complete with an explicit `n=0` directional result and
+**defer expansion** decision. ADR-016 selects repository
+native assignment, coded responses, standard-library analysis, normalized study
+records and a focused `/playtest` route. No analytics SDK, replay, fingerprint,
+free-text collection, model prose or functional Stage-2 editor was introduced.
+
+The fixed corpus has two matched reject/partial-follow intervals and privacy
+decoys. Tests cover stable allocation, exact condition source equality, ambiguous
+safety wording rejection, small-cell suppression, low-sample deferral and
+retention of low ratings. No participant was enrolled or fabricated, so no human
+comprehension, safety, offline-return or demand estimate exists and no TASK-024
+expansion branch is justified. Production migration/browser/accessibility gates
+The durable boundary now covers frozen consent and questions, opaque access-code
+hashes, race-safe deterministic AB/BA assignment, two source-fenced periods,
+bounded idempotent responses, append-only corrections, concrete demand probes,
+withdrawal/deletion, a default-off enrollment kill switch and a suppressed
+admin-only aggregate report.
+
+Migration `20260730_0013` upgraded the real PostgreSQL database from 0012 with
+clean Alembic drift. A self-deleting real database flow and two-worker duplicate
+enrollment race pass. Final gates: 253 infrastructure-enabled backend tests,
+37 frontend tests, Ruff, TypeScript, ESLint, Prettier, Next.js production build,
+and one real Chrome narrow-view/calm/no-push test.
+
+No participant was enrolled for product evidence or fabricated. Consequently no
+human comprehension, safety, offline-return or demand estimate exists; all
+Stage-2 branches remain deferred. Any later study may operate the frozen protocol
+but may not retroactively change TASK-023's `n=0` result.

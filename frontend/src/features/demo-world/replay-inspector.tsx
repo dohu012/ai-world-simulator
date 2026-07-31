@@ -178,6 +178,44 @@ export function ReplayInspector() {
           </ul>
         </div>
       ) : null}
+      {data.decisions?.length ? (
+        <div className="mt-5 border-t border-slate-700 pt-4">
+          <h3 className="text-sm font-semibold text-slate-100">
+            Decision memory context
+          </h3>
+          <ul className="mt-3 space-y-2">
+            {data.decisions.map((decision) => (
+              <li
+                className="border-l-2 border-violet-600 pl-3 text-xs text-slate-300"
+                key={decision.decision_id}
+              >
+                <p className="font-mono">{compactId(decision.decision_id)}</p>
+                <p className="mt-1">
+                  {decision.retrieval_mode ?? "no memory retrieval"} /{" "}
+                  {decision.selected_memory_ids?.length ?? 0} selected /{" "}
+                  {decision.memory_characters_used ?? 0} characters
+                </p>
+                {decision.memory_context_watermark ? (
+                  <p
+                    className="mt-1 font-mono text-slate-500"
+                    title={decision.memory_context_watermark}
+                  >
+                    context {compactId(decision.memory_context_watermark)}
+                  </p>
+                ) : null}
+                {decision.evolution_context_watermark ? (
+                  <p className="mt-1 text-cyan-300">
+                    identity v{decision.identity_version ?? "?"} /{" "}
+                    {Object.entries(decision.relationship_versions ?? {})
+                      .map(([edge, version]) => `${edge} v${version}`)
+                      .join(" · ") || "no relationship edge selected"}
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </section>
   );
 }

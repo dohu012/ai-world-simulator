@@ -1,0 +1,93 @@
+{
+  "$defs": {
+    "EvidenceRole": {
+      "enum": [
+        "direct_interaction",
+        "reported_interaction",
+        "outcome",
+        "repeated_pattern",
+        "contradiction",
+        "reflection",
+        "oracle_event"
+      ],
+      "title": "EvidenceRole",
+      "type": "string"
+    },
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "agent_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "independent_key": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "occurred_at": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "owner_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "role": {
+      "$ref": "#/$defs/EvidenceRole"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "source_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "source_type": {
+      "enum": [
+        "observation",
+        "memory",
+        "action_result"
+      ],
+      "title": "Source Type",
+      "type": "string"
+    },
+    "summary": {
+      "maxLength": 600,
+      "minLength": 1,
+      "title": "Summary",
+      "type": "string"
+    },
+    "visible_from": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "world_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    }
+  },
+  "required": [
+    "id",
+    "world_id",
+    "owner_id",
+    "agent_id",
+    "source_type",
+    "source_id",
+    "occurred_at",
+    "visible_from",
+    "role",
+    "independent_key",
+    "summary",
+    "schema_version"
+  ],
+  "title": "EvolutionEvidence",
+  "type": "object"
+}

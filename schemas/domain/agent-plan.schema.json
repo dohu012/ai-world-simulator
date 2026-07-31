@@ -1,0 +1,121 @@
+{
+  "$defs": {
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "PlanStatus": {
+      "enum": [
+        "draft",
+        "active",
+        "waiting",
+        "blocked",
+        "abandoned",
+        "failed",
+        "completed",
+        "cancelled"
+      ],
+      "title": "PlanStatus",
+      "type": "string"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "blockage_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Blockage Code"
+    },
+    "current_step": {
+      "maximum": 32,
+      "minimum": 0,
+      "title": "Current Step",
+      "type": "integer"
+    },
+    "deadline_world_time": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "fencing_token": {
+      "minimum": 1,
+      "title": "Fencing Token",
+      "type": "integer"
+    },
+    "goal_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "owner_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "replan_count": {
+      "maximum": 2,
+      "minimum": 0,
+      "title": "Replan Count",
+      "type": "integer"
+    },
+    "retry_count": {
+      "maximum": 3,
+      "minimum": 0,
+      "title": "Retry Count",
+      "type": "integer"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "slot": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "status": {
+      "$ref": "#/$defs/PlanStatus"
+    },
+    "step_count": {
+      "maximum": 32,
+      "minimum": 1,
+      "title": "Step Count",
+      "type": "integer"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "world_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    }
+  },
+  "required": [
+    "id",
+    "world_id",
+    "owner_id",
+    "goal_id",
+    "slot",
+    "status",
+    "current_step",
+    "step_count",
+    "replan_count",
+    "retry_count",
+    "blockage_code",
+    "deadline_world_time",
+    "version",
+    "fencing_token",
+    "schema_version"
+  ],
+  "title": "AgentPlan",
+  "type": "object"
+}

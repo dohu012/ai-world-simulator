@@ -15,6 +15,27 @@ class MoveParameters(BaseModel):
     expected_world_version: int = Field(ge=1)
 
 
+class ScenarioActionParameters(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    affordance_id: str = Field(min_length=1, max_length=128)
+
+
+SCENARIO_AFFORDANCES: dict[str, tuple[ActionType, str]] = {
+    "gh-v1:consume-medicine": (ActionType.CONSUME_RESOURCE, "char-lin-zhixia"),
+    "gh-v1:transfer-food": (ActionType.TRANSFER_RESOURCE, "char-chen-mo"),
+    "gh-v1:queue-checkpoint": (ActionType.QUEUE_FOR_SERVICE, "char-zhou-qiming"),
+    "gh-v1:acquire-hidden-cache": (ActionType.ACQUIRE_RESOURCE, "char-lin-zhixia"),
+    "gh-v1:help-luo": (ActionType.HELP_CHARACTER, "char-chen-mo"),
+    "gh-v1:route-clinic": (ActionType.ATTEMPT_ROUTE, "char-zhou-qiming"),
+    "gh-v1:abandon-store-plan": (ActionType.ABANDON_PLAN, "char-chen-mo"),
+    "gh-v1:allocate-rescue-seats": (
+        ActionType.QUEUE_FOR_SERVICE,
+        "char-zhou-qiming",
+    ),
+    "gh-v1:complete-triage": (ActionType.HELP_CHARACTER, "char-lin-zhixia"),
+}
+
+
 @dataclass(frozen=True)
 class MoveState:
     world: World
@@ -25,23 +46,79 @@ class MoveState:
 
 
 @dataclass(frozen=True)
+class ScenarioActionState:
+    available: int | None = None
+    required: int = 0
+    plan_status: str | None = None
+
+
+@dataclass(frozen=True)
 class ActionValidation:
     accepted: bool
     failure_code: str | None = None
     failure_reason: str | None = None
     move: MoveParameters | None = None
+    scenario_action: ScenarioActionParameters | None = None
 
 
 class ActionValidator:
     """Validate client shape separately from current authoritative state."""
 
-    def validate(self, intent: ActionIntent, state: MoveState | None = None) -> ActionValidation:
+    def validate(
+        self,
+        intent: ActionIntent,
+        state: MoveState | None = None,
+        scenario_state: ScenarioActionState | None = None,
+    ) -> ActionValidation:
         if intent.action_type is ActionType.WAIT:
             if intent.parameters:
                 return self._reject("WAIT_PARAMETERS_NOT_ALLOWED", "Wait accepts no parameters.")
             return ActionValidation(accepted=True)
+        if intent.action_type in {definition[0] for definition in SCENARIO_AFFORDANCES.values()}:
+            try:
+                scenario_parameters = ScenarioActionParameters.model_validate(intent.parameters)
+            except ValidationError:
+                return self._reject(
+                    "ACTION_AFFORDANCE_STALE", "A server-offered affordance is required."
+                )
+            definition = SCENARIO_AFFORDANCES.get(scenario_parameters.affordance_id)
+            if (
+                definition is None
+                or definition[0] is not intent.action_type
+                or definition[1] != intent.actor_id
+            ):
+                return self._reject(
+                    "ACTION_TARGET_NOT_ALLOWED",
+                    "The affordance does not permit this action type.",
+                )
+            if scenario_parameters.affordance_id == "gh-v1:acquire-hidden-cache":
+                return self._reject(
+                    "ACTION_TARGET_NOT_ALLOWED",
+                    "The hidden cache is not an offered resource account.",
+                )
+            if scenario_parameters.affordance_id in {
+                "gh-v1:consume-medicine",
+                "gh-v1:transfer-food",
+                "gh-v1:help-luo",
+                "gh-v1:allocate-rescue-seats",
+            }:
+                if (
+                    scenario_state is None
+                    or scenario_state.available is None
+                    or scenario_state.available < scenario_state.required
+                ):
+                    return self._reject(
+                        "RESOURCE_INSUFFICIENT", "The offered resource is no longer sufficient."
+                    )
+            if scenario_parameters.affordance_id in {
+                "gh-v1:abandon-store-plan",
+                "gh-v1:complete-triage",
+                "gh-v1:route-clinic",
+            } and (scenario_state is None or scenario_state.plan_status != "active"):
+                return self._reject("PLAN_NOT_ACTIVE", "The offered plan is no longer active.")
+            return ActionValidation(accepted=True, scenario_action=scenario_parameters)
         if intent.action_type is not ActionType.MOVE:
-            return self._reject("UNSUPPORTED_DEMO_ACTION", "The demo supports wait and move.")
+            return self._reject("UNSUPPORTED_DEMO_ACTION", "The action is not server-offered.")
         try:
             parameters = MoveParameters.model_validate(intent.parameters)
         except ValidationError:

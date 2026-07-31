@@ -9,7 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.application.action_validator import MoveState
+from app.application.action_validator import MoveState, ScenarioActionState
 from app.domain.schemas import (
     ActionIntent,
     ActionResult,
@@ -23,14 +23,16 @@ from app.domain.schemas import (
     WorldEvent,
     WorldFact,
 )
+from app.infrastructure.database import memory_models as mr
 from app.infrastructure.database import models as r
 from app.infrastructure.database import runtime_models as rr
+from app.infrastructure.database import seven_day_models as sr
 from app.services.demo_world import (
     DemoAgentPerspectiveReadModel,
     DemoWorldReadModel,
     DemoWorldSummaryReadModel,
 )
-from app.world_engine.gray_harbor import MoveMutationPlan
+from app.world_engine.gray_harbor import MoveMutationPlan, ScenarioMutationPlan
 
 
 class ActionLifecycleConflictError(Exception):
@@ -75,6 +77,14 @@ class DecisionReplayItem(BaseModel):
     prompt_hash: str
     failure_code: str | None
     action_intent_id: str | None
+    retrieval_id: str | None = None
+    retrieval_mode: str | None = None
+    selected_memory_ids: list[str] = Field(default_factory=list)
+    memory_context_watermark: str | None = None
+    memory_characters_used: int | None = None
+    evolution_context_watermark: str | None = None
+    identity_version: int | None = None
+    relationship_versions: dict[str, int] = Field(default_factory=dict)
 
 
 def _from_json(contract: Any, payload: dict[str, Any]) -> Any:
@@ -219,6 +229,42 @@ class WorldRepository:
                 )
             ).all()
         )
+        retrieval_rows = list(
+            (
+                await self.session.scalars(
+                    select(mr.MemoryRetrievalRunRecord).where(
+                        mr.MemoryRetrievalRunRecord.world_id == world_id,
+                        mr.MemoryRetrievalRunRecord.decision_id.is_not(None),
+                    )
+                )
+            ).all()
+        )
+        retrieval_by_decision = {
+            row.decision_id: row for row in retrieval_rows if row.decision_id is not None
+        }
+        selected_by_retrieval: dict[str, list[str]] = {}
+        if retrieval_rows:
+            candidate_rows = list(
+                (
+                    await self.session.scalars(
+                        select(mr.MemoryRetrievalCandidateRecord)
+                        .where(
+                            mr.MemoryRetrievalCandidateRecord.retrieval_id.in_(
+                                [row.id for row in retrieval_rows]
+                            ),
+                            mr.MemoryRetrievalCandidateRecord.selected.is_(True),
+                        )
+                        .order_by(
+                            mr.MemoryRetrievalCandidateRecord.retrieval_id,
+                            mr.MemoryRetrievalCandidateRecord.rank,
+                        )
+                    )
+                ).all()
+            )
+            for candidate in candidate_rows:
+                selected_by_retrieval.setdefault(candidate.retrieval_id, []).append(
+                    candidate.memory_id
+                )
         windows = list(
             (
                 await self.session.scalars(
@@ -226,20 +272,53 @@ class WorldRepository:
                 )
             ).all()
         )
-        decisions = [
-            DecisionReplayItem(
-                decision_id=row.id,
-                agent_id=row.agent_id,
-                status=row.status,
-                observation_ids=_string_list(row.input_payload.get("observation_ids")),
-                prompt_hash=str(row.input_payload.get("prompt_hash", "")),
-                failure_code=str((row.outcome_payload or {}).get("failure_code"))
-                if (row.outcome_payload or {}).get("failure_code")
-                else None,
-                action_intent_id=row.action_intent_id,
+        decisions = []
+        for row in decision_rows:
+            retrieval = retrieval_by_decision.get(row.id)
+            evolution = row.input_payload.get("evolution_context")
+            evolution_payload = evolution if isinstance(evolution, dict) else {}
+            identity = evolution_payload.get("identity")
+            identity_payload = identity if isinstance(identity, dict) else {}
+            relationship_value = evolution_payload.get("relationships")
+            relationship_payloads = (
+                relationship_value if isinstance(relationship_value, list) else []
             )
-            for row in decision_rows
-        ]
+            decisions.append(
+                DecisionReplayItem(
+                    decision_id=row.id,
+                    agent_id=row.agent_id,
+                    status=row.status,
+                    observation_ids=_string_list(row.input_payload.get("observation_ids")),
+                    prompt_hash=str(row.input_payload.get("prompt_hash", "")),
+                    failure_code=str((row.outcome_payload or {}).get("failure_code"))
+                    if (row.outcome_payload or {}).get("failure_code")
+                    else None,
+                    action_intent_id=row.action_intent_id,
+                    retrieval_id=retrieval.id if retrieval is not None else None,
+                    retrieval_mode=retrieval.mode if retrieval is not None else None,
+                    selected_memory_ids=selected_by_retrieval.get(retrieval.id, [])
+                    if retrieval is not None
+                    else [],
+                    memory_context_watermark=retrieval.context_watermark
+                    if retrieval is not None
+                    else None,
+                    memory_characters_used=retrieval.token_used if retrieval is not None else None,
+                    evolution_context_watermark=str(
+                        row.input_payload.get("evolution_context_watermark", "")
+                    )
+                    or None,
+                    identity_version=int(identity_payload["version"])
+                    if isinstance(identity_payload.get("version"), int)
+                    else None,
+                    relationship_versions={
+                        f"{item.get('target_type')}:{item.get('target_id')}": int(
+                            item.get("version", 1)
+                        )
+                        for item in relationship_payloads
+                        if isinstance(item, dict)
+                    },
+                )
+            )
         correlations = (
             {x.correlation_id for x in world.events}
             | {x.decision_correlation_id for x in world.oracleRequests}
@@ -367,16 +446,42 @@ class WorldRepository:
             and character.location_id == target_location_id
         )
 
+    async def lock_scenario_action_state(self, affordance_id: str) -> ScenarioActionState:
+        resource_requirements = {
+            "gh-v1:consume-medicine": ("account-clinic-medicine", 1),
+            "gh-v1:transfer-food": ("account-store-food", 4),
+            "gh-v1:help-luo": ("account-store-food", 2),
+            "gh-v1:allocate-rescue-seats": ("account-rescue-seats", 10),
+        }
+        requirement = resource_requirements.get(affordance_id)
+        if requirement is not None:
+            account = await self.session.get(
+                sr.ResourceAccountRecord, requirement[0], with_for_update=True
+            )
+            return ScenarioActionState(
+                available=account.available if account is not None else None,
+                required=requirement[1],
+            )
+        plan_id = {
+            "gh-v1:abandon-store-plan": "plan-chen-supplies",
+            "gh-v1:complete-triage": "plan-lin-triage",
+            "gh-v1:route-clinic": "plan-zhou-rescue",
+        }.get(affordance_id)
+        if plan_id is not None:
+            plan = await self.session.get(sr.AgentPlanRecord, plan_id, with_for_update=True)
+            return ScenarioActionState(plan_status=plan.status if plan is not None else None)
+        return ScenarioActionState()
+
     async def persist_action_lifecycle(
         self,
         intent: ActionIntent,
         result: ActionResult,
         event: WorldEvent | None,
         observations: list[Observation] | None = None,
-        mutation: MoveMutationPlan | None = None,
+        mutation: MoveMutationPlan | ScenarioMutationPlan | None = None,
     ) -> None:
         """Flush one already adjudicated lifecycle and objective mutation, then commit once."""
-        if mutation is not None:
+        if isinstance(mutation, MoveMutationPlan):
             world_row = await self.session.get(r.WorldRecord, mutation.world.id)
             character_row = await self.session.get(r.CharacterRecord, mutation.character.id)
             if world_row is None or character_row is None:
@@ -385,6 +490,8 @@ class WorldRepository:
             world_row.payload = mutation.world.model_dump(mode="json")
             character_row.version = mutation.character.version
             character_row.payload = mutation.character.model_dump(mode="json")
+        elif isinstance(mutation, ScenarioMutationPlan):
+            await self._apply_scenario_mutation(intent, mutation)
         self.session.add(
             r.ActionIntentRecord(
                 id=intent.id,
@@ -450,6 +557,61 @@ class WorldRepository:
         except Exception:
             await self.session.rollback()
             raise
+
+    async def _apply_scenario_mutation(
+        self, intent: ActionIntent, mutation: ScenarioMutationPlan
+    ) -> None:
+        if mutation.plan_id is not None:
+            plan = await self.session.get(
+                sr.AgentPlanRecord, mutation.plan_id, with_for_update=True
+            )
+            if plan is None or mutation.plan_status is None:
+                raise RuntimeError("scenario plan mutation target disappeared")
+            plan.status = mutation.plan_status
+            plan.version += 1
+            plan.payload = {**plan.payload, "status": mutation.plan_status, "version": plan.version}
+            return
+        if mutation.resource_id is None:
+            raise RuntimeError("resource mutation is missing its resource definition")
+        for index, leg in enumerate(mutation.legs):
+            account = await self.session.get(
+                sr.ResourceAccountRecord, leg.account_id, with_for_update=True
+            )
+            if account is None:
+                raise RuntimeError("scenario resource account disappeared")
+            new_available = account.available + leg.delta_available
+            new_consumed = account.consumed + leg.delta_consumed
+            if new_available < 0 or new_consumed < 0:
+                raise ValueError("RESOURCE_INSUFFICIENT")
+            prior_version = account.version
+            account.available = new_available
+            account.consumed = new_consumed
+            account.version += 1
+            account.payload = {
+                **account.payload,
+                "available": new_available,
+                "consumed": new_consumed,
+                "version": account.version,
+            }
+            self.session.add(
+                sr.ResourceLedgerRecord(
+                    id=f"ledger-{intent.id}-{index}",
+                    world_id=intent.world_id,
+                    resource_id=mutation.resource_id,
+                    idempotency_key=f"{intent.id}:{index}",
+                    operation=mutation.operation,
+                    amount=abs(leg.delta_available) or leg.delta_consumed,
+                    world_time=intent.submitted_at,
+                    payload={
+                        "account_id": leg.account_id,
+                        "prior_version": prior_version,
+                        "new_version": account.version,
+                        "delta_available": leg.delta_available,
+                        "delta_consumed": leg.delta_consumed,
+                        "source_action_id": intent.id,
+                    },
+                )
+            )
 
     async def rollback(self) -> None:
         await self.session.rollback()

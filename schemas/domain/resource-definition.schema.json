@@ -1,0 +1,58 @@
+{
+  "$defs": {
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "conservation_policy": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "divisible": {
+      "default": false,
+      "title": "Divisible",
+      "type": "boolean"
+    },
+    "id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "privacy_class": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "resource_type": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "unit": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "world_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    }
+  },
+  "required": [
+    "id",
+    "world_id",
+    "resource_type",
+    "unit",
+    "conservation_policy",
+    "privacy_class",
+    "version",
+    "schema_version"
+  ],
+  "title": "ResourceDefinition",
+  "type": "object"
+}

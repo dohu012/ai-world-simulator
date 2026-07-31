@@ -89,32 +89,34 @@ export function SocialWorldPanel() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        {propagation.data?.map((item) => (
-          <article
-            key={item.transmission_id}
-            className="rounded-md border border-slate-700 bg-slate-950/60 p-4"
-          >
-            <p className="text-xs text-sky-300">{item.channel_kind}</p>
-            <h3 className="mt-1 font-semibold text-slate-50">
-              {item.recipient_id}
-            </h3>
-            <p className="mt-2 text-sm text-slate-300">{item.claim_value}</p>
-            <dl className="mt-3 space-y-1 text-xs text-slate-400">
-              <div>状态：{item.status}</div>
-              <div>可靠度：{Math.round(item.reliability * 100)}%</div>
-              <div>失真策略：{item.distortion_policy_id}</div>
-              <div>
-                到达：{new Date(item.arrival_world_time).toLocaleString()}
-              </div>
-            </dl>
-          </article>
-        ))}
+        {(Array.isArray(propagation.data) ? propagation.data : []).map(
+          (item) => (
+            <article
+              key={item.transmission_id}
+              className="rounded-md border border-slate-700 bg-slate-950/60 p-4"
+            >
+              <p className="text-xs text-sky-300">{item.channel_kind}</p>
+              <h3 className="mt-1 font-semibold text-slate-50">
+                {item.recipient_id}
+              </h3>
+              <p className="mt-2 text-sm text-slate-300">{item.claim_value}</p>
+              <dl className="mt-3 space-y-1 text-xs text-slate-400">
+                <div>状态：{item.status}</div>
+                <div>可靠度：{Math.round(item.reliability * 100)}%</div>
+                <div>失真策略：{item.distortion_policy_id}</div>
+                <div>
+                  到达：{new Date(item.arrival_world_time).toLocaleString()}
+                </div>
+              </dl>
+            </article>
+          ),
+        )}
       </div>
 
       <div>
         <h3 className="font-semibold text-slate-50">Belief Evolution</h3>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
-          {beliefs.data?.map((belief) => (
+          {(Array.isArray(beliefs.data) ? beliefs.data : []).map((belief) => (
             <article
               key={belief.id}
               className="rounded-md border border-amber-900/70 bg-amber-950/20 p-3"
@@ -134,7 +136,7 @@ export function SocialWorldPanel() {
 
       <div>
         <h3 className="font-semibold text-slate-50">Bounded Conversation</h3>
-        {conversations.data?.length ? (
+        {Array.isArray(conversations.data) && conversations.data.length ? (
           conversations.data.map((conversation) => (
             <article
               key={conversation.id}

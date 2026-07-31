@@ -45,6 +45,7 @@ Infrastructure
 | Memory | Agent memory summaries and retrieval policy | Complete world state, authoritative outcomes | Domain memory contracts, repositories, Model Gateway for summarization | API routes, direct DB writes outside repositories |
 | Infrastructure | DB, Redis, config, logging, process adapters | Domain decisions, prompts, product rules | External libraries | Domain depending back on infrastructure |
 | Scheduler | Triggering time-based work | Inventing outcomes, bypassing validation | Application use cases, job repositories | Direct mutation without World Engine |
+| Plan Coordinator | Bounded typed goal and plan transitions, due-step proposals | Resource/state mutation, action validation, model inference | Domain plan policies, Application use cases | Direct repository mutation, bypassing Action Validator or World Engine |
 
 ## Data Flow
 
@@ -80,6 +81,14 @@ WorldEvent
 - `ActionValidator` may accept, reject, or normalize intent. It must not mutate world state.
 - `WorldEngine` applies validated intent and world rules. It is the only owner of `ActionResult`.
 - `ActionResult` records consequences and emitted events. New `WorldEvent` entries come from this result path.
+- Consequential plan steps use the same `ActionIntent` -> Action Validator ->
+  World Engine lifecycle. A plan transition is not permission to mutate resources,
+  capacity, health, access, rescue allocation, or character state.
+- Resource balances, reservations, and append-only ledger entries are authoritative
+  PostgreSQL state. Repositories persist already-adjudicated effects atomically and
+  do not infer consequences.
+- Uncertain outcomes are versioned World Engine policies. Runtime, clients, and
+  models cannot choose seeds, rolls, modifiers, thresholds, or results.
 
 ## Objective And Subjective State
 

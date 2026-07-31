@@ -1,0 +1,1 @@
+{"id":"ledger-001","world_id":"world-gray-harbor","resource_id":"resource-food","operation":"consume","from_account_id":"account-store-food","to_account_id":null,"amount":1,"unit":"ration","idempotency_key":"day-1-food","source_action_id":null,"source_event_id":"event-day-1","world_time":"2026-07-28T00:00:00+08:00","reason_code":"DAILY_DEMAND","schema_version":"1.0"}

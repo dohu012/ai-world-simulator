@@ -1,0 +1,197 @@
+{
+  "$defs": {
+    "CausalClaim": {
+      "additionalProperties": false,
+      "properties": {
+        "agent_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Agent Id"
+        },
+        "corrects_claim_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Corrects Claim Id"
+        },
+        "epistemic_class": {
+          "$ref": "#/$defs/EpistemicClass"
+        },
+        "id": {
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "importance": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Importance",
+          "type": "number"
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "owner_id": {
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "source_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Source Hash",
+          "type": "string"
+        },
+        "source_id": {
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "source_type": {
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "source_version": {
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "text": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "visible_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "world_id": {
+          "$ref": "#/$defs/NonEmptyString"
+        }
+      },
+      "required": [
+        "id",
+        "owner_id",
+        "world_id",
+        "source_type",
+        "source_id",
+        "source_version",
+        "source_hash",
+        "occurred_at",
+        "visible_at",
+        "epistemic_class",
+        "text",
+        "importance",
+        "schema_version"
+      ],
+      "title": "CausalClaim",
+      "type": "object"
+    },
+    "EpistemicClass": {
+      "enum": [
+        "objective",
+        "observed",
+        "believed",
+        "decided",
+        "outcome",
+        "memory",
+        "relationship",
+        "unknown"
+      ],
+      "title": "EpistemicClass",
+      "type": "string"
+    },
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "claims": {
+      "items": {
+        "$ref": "#/$defs/CausalClaim"
+      },
+      "maxItems": 24,
+      "title": "Claims",
+      "type": "array"
+    },
+    "compiler_version": {
+      "const": "causal-compiler-v1",
+      "default": "causal-compiler-v1",
+      "title": "Compiler Version",
+      "type": "string"
+    },
+    "id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "interval_end": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "interval_start": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "lifecycle": {
+      "default": "ready",
+      "enum": [
+        "ready",
+        "fallback",
+        "superseded",
+        "invalidated"
+      ],
+      "title": "Lifecycle",
+      "type": "string"
+    },
+    "narrative": {
+      "items": {
+        "maxLength": 600,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 24,
+      "title": "Narrative",
+      "type": "array"
+    },
+    "owner_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "source_watermark": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Source Watermark",
+      "type": "string"
+    },
+    "world_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    }
+  },
+  "required": [
+    "id",
+    "owner_id",
+    "world_id",
+    "interval_start",
+    "interval_end",
+    "source_watermark",
+    "claims",
+    "narrative",
+    "schema_version"
+  ],
+  "title": "OfflineSummary",
+  "type": "object"
+}

@@ -1,0 +1,14 @@
+{
+  "id": "evidence-chen-plan-failure-1",
+  "world_id": "gray-harbor",
+  "owner_id": "chen",
+  "agent_id": "chen",
+  "source_type": "memory",
+  "source_id": "memory-chen-plan-failure-1",
+  "occurred_at": "2026-07-27T00:00:00Z",
+  "visible_from": "2026-07-27T01:00:00Z",
+  "role": "outcome",
+  "independent_key": "plan-failure-day-6",
+  "summary": "Chen learned that the supply plan failed after the shipment was lost.",
+  "schema_version": "1.0"
+}

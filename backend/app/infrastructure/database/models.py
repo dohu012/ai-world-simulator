@@ -1,5 +1,7 @@
 """SQLAlchemy persistence models for the replayable world-state foundation."""
 
+# ruff: noqa: E402, F401, I001
+
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, UniqueConstraint, func
@@ -257,5 +259,10 @@ class ModelCallAttemptRecord(Base):
 
 
 # Ensure TASK-017 tables are registered in shared metadata.
+from app.infrastructure.database import evolution_models as evolution_models  # noqa: E402,F401
+from app.infrastructure.database import memory_models as memory_models  # noqa: E402,F401
+from app.infrastructure.database import product_validation_models as product_validation_models  # noqa: E402,F401
+from app.infrastructure.database import return_loop_models as return_loop_models  # noqa: E402,F401
 from app.infrastructure.database import runtime_models as runtime_models  # noqa: E402,F401
+from app.infrastructure.database import seven_day_models as seven_day_models  # noqa: E402,F401
 from app.infrastructure.database import social_models as social_models  # noqa: E402,F401

@@ -1,0 +1,1 @@
+{"id":"condition-shipment-stop","world_id":"world-gray-harbor","policy_version":1,"condition":{"field":"day","op":"gte","value":5},"deadline_world_time":"2026-08-02T00:00:00+08:00","one_shot":true,"idempotency_key":"scenario-v1-day5","event_specification":{"event_type":"shipment_stopped"},"status":"pending","schema_version":"1.0"}

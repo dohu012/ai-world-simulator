@@ -1,0 +1,138 @@
+{
+  "$defs": {
+    "Dimension": {
+      "enum": [
+        "caution",
+        "compassion",
+        "confidence",
+        "self_reliance",
+        "trust",
+        "affection",
+        "respect",
+        "fear",
+        "resentment",
+        "gratitude",
+        "dependence",
+        "familiarity"
+      ],
+      "title": "Dimension",
+      "type": "string"
+    },
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "TargetType": {
+      "enum": [
+        "agent",
+        "oracle"
+      ],
+      "title": "TargetType",
+      "type": "string"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "content_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Content Hash",
+      "type": "string"
+    },
+    "dimensions": {
+      "additionalProperties": {
+        "maximum": 1.0,
+        "minimum": -1.0,
+        "type": "number"
+      },
+      "maxProperties": 16,
+      "propertyNames": {
+        "$ref": "#/$defs/Dimension"
+      },
+      "title": "Dimensions",
+      "type": "object"
+    },
+    "evidence_horizon": {
+      "$ref": "#/$defs/Timestamp"
+    },
+    "id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "interpretation": {
+      "maxLength": 600,
+      "minLength": 1,
+      "title": "Interpretation",
+      "type": "string"
+    },
+    "owner_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "policy_version": {
+      "const": "evolution-policy-v1",
+      "default": "evolution-policy-v1",
+      "title": "Policy Version",
+      "type": "string"
+    },
+    "previous_snapshot_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Previous Snapshot Id"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "subject_agent_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "target_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "target_type": {
+      "$ref": "#/$defs/TargetType"
+    },
+    "uncertainty": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Uncertainty",
+      "type": "number"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "world_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    }
+  },
+  "required": [
+    "id",
+    "world_id",
+    "owner_id",
+    "subject_agent_id",
+    "target_type",
+    "target_id",
+    "version",
+    "uncertainty",
+    "interpretation",
+    "evidence_horizon",
+    "content_hash",
+    "schema_version"
+  ],
+  "title": "RelationshipSnapshot",
+  "type": "object"
+}

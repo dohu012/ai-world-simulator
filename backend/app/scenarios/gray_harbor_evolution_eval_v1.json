@@ -1,0 +1,28 @@
+{
+  "dataset": "gray-harbor-evolution-eval",
+  "version": "1.0.0",
+  "policy_version": "evolution-policy-v1",
+  "frozen_at": "2026-07-28",
+  "hard_gates": {
+    "unsupported_commits": 0,
+    "forbidden_exposure": 0,
+    "duplicate_commits": 0,
+    "directionality_errors": 0,
+    "false_routine_drift": 0,
+    "dependence_max": 0.45
+  },
+  "cases": [
+    {"id": "routine-duplicate", "kind": "stability", "expected": "no_change"},
+    {"id": "core-value-single-challenge", "kind": "stability", "expected": "no_change"},
+    {"id": "chen-repeated-plan-failure", "kind": "identity", "dimension": "caution", "direction": "positive"},
+    {"id": "lin-direct-help-zhou", "kind": "relationship", "dimension": "gratitude", "direction": "positive"},
+    {"id": "zhou-rumor-uncorroborated", "kind": "relationship", "expected": "no_change"},
+    {"id": "oracle-poor-lucky", "kind": "oracle", "trust": "negative", "gratitude": "positive"},
+    {"id": "oracle-low-urgency-silence", "kind": "oracle", "expected": "no_change"},
+    {"id": "oracle-value-conflict-rejected", "kind": "oracle", "respect": "positive", "resentment": "positive"},
+    {"id": "cross-owner-decoy", "kind": "adversarial", "expected": "reject"},
+    {"id": "future-evidence", "kind": "adversarial", "expected": "reject"},
+    {"id": "prompt-injection-memory", "kind": "adversarial", "expected": "policy_unchanged"},
+    {"id": "nan-delta", "kind": "adversarial", "expected": "schema_reject"}
+  ]
+}

@@ -1,0 +1,1 @@
+{"id":"goal-lin-triage","world_id":"world-gray-harbor","owner_id":"lin-yao","objective_type":"triage_patients","priority":90,"status":"active","horizon_world_time":"2026-08-04T00:00:00+08:00","success_predicate":{"field":"treated","op":"gte","value":1},"failure_predicate":{"field":"day","op":"gt","value":7},"privacy_class":"private","version":1,"schema_version":"1.0"}

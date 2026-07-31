@@ -8,16 +8,20 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.application.action_lifecycle import DemoActionSubmission, GrayHarborActionService
 from app.application.agent_decision import AgentDecisionApplicationService, DecisionSubmission
 from app.application.gray_harbor import WORLD_ID
 from app.application.observation_builder import ObservationBuilder
+from app.application.seven_day_scenario import daily_affordances
 from app.application.social_runtime import SocialRuntimeService
 from app.domain.enums import EventType, FactVisibility, ObservationType, OracleRequestStatus
 from app.domain.observation import FeltChange
 from app.domain.schemas import Character, Observation, OracleRequest, OracleResponse, WorldEvent
 from app.infrastructure.database import models as r
 from app.infrastructure.database import runtime_models as rr
+from app.infrastructure.database import seven_day_models as sr
 from app.model_gateway.adapters import ScriptedModelGateway
+from app.repositories.worlds import WorldRepository
 
 CHEN_ID = "char-chen-mo"
 SCHEDULE_ID = "schedule-gray-harbor-north-gate-rumor-v1"
@@ -137,6 +141,9 @@ class PostgresWorldRuntimeAdapter:
 
     async def advance(self, command: AdvanceCommand) -> RuntimeRead:
         self._enabled()
+        previous_day = 0
+        current_day = 0
+        scenario_generation = 0
         async with self.sessions() as session:
             runtime = await session.get(rr.WorldRuntimeRecord, WORLD_ID, with_for_update=True)
             if runtime is None or runtime.status != "running":
@@ -171,12 +178,134 @@ class PostgresWorldRuntimeAdapter:
             for schedule in due:
                 await self._publish_fixture(session, runtime, schedule)
             await self._expire_windows(session, runtime.current_world_time, datetime.now(UTC))
+            checkpoint = await session.get(
+                sr.ScenarioCheckpointRecord, WORLD_ID, with_for_update=True
+            )
+            if checkpoint is not None:
+                previous_day = checkpoint.current_day
+                generation_value = checkpoint.payload.get("reset_generation")
+                if isinstance(generation_value, int):
+                    scenario_generation = generation_value
+                started_value = checkpoint.payload.get("started_world_time")
+                if isinstance(started_value, str):
+                    started = datetime.fromisoformat(started_value)
+                    checkpoint.current_day = min(
+                        7,
+                        max(
+                            0,
+                            int((runtime.current_world_time - started).total_seconds() // 86_400),
+                        ),
+                    )
+                    checkpoint.status = "completed" if checkpoint.current_day == 7 else "running"
+                    checkpoint.version += 1
+                    current_day = checkpoint.current_day
+                    if current_day >= 5:
+                        await self._fire_day5_condition(session, runtime, scenario_generation)
             await session.commit()
+        for day in range(previous_day + 1, current_day + 1):
+            await self._execute_daily_affordances(day, scenario_generation)
         social = SocialRuntimeService(self.sessions)
         await social.seed_scenario()
         await social.deliver_due()
         await self._continue_pending()
         return await self.read()
+
+    async def _fire_day5_condition(
+        self,
+        session: AsyncSession,
+        runtime: rr.WorldRuntimeRecord,
+        generation: int,
+    ) -> None:
+        condition = await session.get(
+            sr.ConditionalEventRecord,
+            "condition-food-shipment-stop",
+            with_for_update=True,
+        )
+        if condition is None or condition.status != "pending":
+            return
+        event_id = f"event-scenario-g{generation}-food-shipment-stopped"
+        condition.status = "fired"
+        condition.fired_at = runtime.current_world_time
+        condition.payload = {
+            **condition.payload,
+            "status": "fired",
+            "event_id": event_id,
+        }
+        if await session.get(r.WorldEventRecord, event_id) is not None:
+            return
+        character_rows = (
+            await session.scalars(
+                select(r.CharacterRecord)
+                .where(r.CharacterRecord.world_id == WORLD_ID)
+                .order_by(r.CharacterRecord.id)
+            )
+        ).all()
+        characters = [self._character(row) for row in character_rows]
+        event = WorldEvent(
+            id=event_id,
+            world_id=WORLD_ID,
+            event_type=EventType.SCHEDULED_EVENT,
+            title="Food shipment stops",
+            description="The expected Gray Harbor food shipment will not arrive.",
+            occurred_at=runtime.current_world_time,
+            location_id="north-market-store",
+            participant_ids=[character.id for character in characters],
+            fact_ids=[],
+            source_action_id=None,
+            visibility=FactVisibility.PUBLIC,
+            correlation_id=f"corr-scenario-g{generation}-day5-shipment",
+            metadata={
+                "condition_id": condition.id,
+                "scenario_generation": generation,
+            },
+            schema_version="1.0",
+            created_at=runtime.current_world_time,
+        )
+        observations = ObservationBuilder().build_for_events([event], characters)
+        session.add(
+            r.WorldEventRecord(
+                id=event.id,
+                world_id=event.world_id,
+                event_type=event.event_type.value,
+                occurred_at=event.occurred_at,
+                visibility=event.visibility.value,
+                correlation_id=event.correlation_id,
+                source_action_id=None,
+                schema_version=event.schema_version,
+                payload=event.model_dump(mode="json"),
+            )
+        )
+        for observation in observations:
+            session.add(
+                r.ObservationRecord(
+                    id=observation.id,
+                    world_id=observation.world_id,
+                    agent_id=observation.agent_id,
+                    observed_at=observation.observed_at,
+                    source_event_id=event.id,
+                    source_message_id=None,
+                    schema_version=observation.schema_version,
+                    payload=observation.model_dump(mode="json"),
+                )
+            )
+
+    async def _execute_daily_affordances(self, day: int, generation: int) -> None:
+        for actor_id, action_type, affordance_id in daily_affordances(day):
+            async with self.sessions() as session:
+                await GrayHarborActionService(WorldRepository(session)).submit(
+                    actor_id,
+                    DemoActionSubmission(
+                        idempotency_key=(
+                            f"scenario-v1-g{generation}-day-{day}-{action_type.value}"
+                        ),
+                        action_type=action_type,
+                        parameters={"affordance_id": affordance_id},
+                        reason_summary=(
+                            "Execute the current server-offered scenario step "
+                            f"for generation {generation}."
+                        ),
+                    ),
+                )
 
     async def _publish_fixture(
         self,

@@ -6,8 +6,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.errors import register_exception_handlers
 from app.api.routes.demo_world import router as demo_world_router
+from app.api.routes.evolution import router as evolution_router
 from app.api.routes.health import router as health_router
+from app.api.routes.memory import router as memory_router
 from app.api.routes.persistent_world import router as persistent_world_router
+from app.api.routes.product_validation import router as product_validation_router
+from app.api.routes.return_loop import router as return_loop_router
+from app.api.routes.seven_day_world import router as seven_day_world_router
 from app.api.routes.social_world import router as social_world_router
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
@@ -42,6 +47,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(demo_world_router)
     app.include_router(persistent_world_router)
     app.include_router(social_world_router)
+    app.include_router(seven_day_world_router)
+    app.include_router(memory_router)
+    app.include_router(evolution_router)
+    app.include_router(return_loop_router)
+    app.include_router(product_validation_router)
     app.include_router(health_router)
     register_exception_handlers(app)
     return app

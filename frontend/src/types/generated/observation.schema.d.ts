@@ -2,7 +2,18 @@
 /** Generated from schemas/domain. Do not edit by hand. */
 
 export type CharacterId = string;
-export type ActionType = "move" | "speak" | "wait" | "custom";
+export type ActionType =
+  | "move"
+  | "speak"
+  | "wait"
+  | "custom"
+  | "acquire_resource"
+  | "transfer_resource"
+  | "consume_resource"
+  | "help_character"
+  | "queue_for_service"
+  | "attempt_route"
+  | "abandon_plan";
 export type NonEmptyString = string;
 export type JSONValue =
   | JSONPrimitive

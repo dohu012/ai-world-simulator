@@ -1,0 +1,114 @@
+{
+  "$defs": {
+    "NonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "SchemaVersion": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "Timestamp": {
+      "format": "date-time",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "amount": {
+      "exclusiveMinimum": 0,
+      "maximum": 1000000,
+      "title": "Amount",
+      "type": "integer"
+    },
+    "from_account_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "From Account Id"
+    },
+    "id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "idempotency_key": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "operation": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "reason_code": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "resource_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "source_action_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Source Action Id"
+    },
+    "source_event_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Source Event Id"
+    },
+    "to_account_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "To Account Id"
+    },
+    "unit": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "world_id": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "world_time": {
+      "$ref": "#/$defs/Timestamp"
+    }
+  },
+  "required": [
+    "id",
+    "world_id",
+    "resource_id",
+    "operation",
+    "from_account_id",
+    "to_account_id",
+    "amount",
+    "unit",
+    "idempotency_key",
+    "source_action_id",
+    "source_event_id",
+    "world_time",
+    "reason_code",
+    "schema_version"
+  ],
+  "title": "ResourceLedgerEntry",
+  "type": "object"
+}

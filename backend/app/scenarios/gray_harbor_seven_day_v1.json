@@ -1,0 +1,53 @@
+{
+  "scenario_id": "gray-harbor-seven-day",
+  "version": "1.0.0",
+  "duration_days": 7,
+  "l3_resident_ids": ["char-lin-zhixia", "char-zhou-qiming", "char-chen-mo"],
+  "residents": [
+    {"id":"char-lin-zhixia","name":"Lin Zhixia","tier":"L3","role":"doctor","location":"clinic"},
+    {"id":"char-zhou-qiming","name":"Zhou Qiming","tier":"L3","role":"officer","location":"north-gate"},
+    {"id":"char-chen-mo","name":"Chen Mo","tier":"L3","role":"shopkeeper","location":"store"},
+    {"id":"resident-04","name":"Aunt Qiao","tier":"L2","role":"patient","location":"clinic"},
+    {"id":"resident-05","name":"Wei An","tier":"L2","role":"courier","location":"market"},
+    {"id":"resident-06","name":"Mei Fang","tier":"L2","role":"nurse","location":"clinic"},
+    {"id":"resident-07","name":"Guo Ping","tier":"L2","role":"clerk","location":"government"},
+    {"id":"resident-08","name":"Sun Li","tier":"L2","role":"parent","location":"shelter"},
+    {"id":"resident-09","name":"Sun Tao","tier":"L2","role":"minor","location":"shelter"},
+    {"id":"resident-10","name":"He Jun","tier":"L2","role":"driver","location":"market"},
+    {"id":"resident-11","name":"Luo Min","tier":"L2","role":"patient","location":"home-east"},
+    {"id":"resident-12","name":"Deng Yu","tier":"L2","role":"volunteer","location":"shelter"},
+    {"id":"resident-13","name":"Fan Qi","tier":"L1","role":"resident","location":"home-west"},
+    {"id":"resident-14","name":"Jiang Nan","tier":"L1","role":"resident","location":"home-west"},
+    {"id":"resident-15","name":"Kong Rui","tier":"L1","role":"resident","location":"home-east"},
+    {"id":"resident-16","name":"Li Wen","tier":"L1","role":"resident","location":"market"},
+    {"id":"resident-17","name":"Ma Xin","tier":"L1","role":"resident","location":"home-east"},
+    {"id":"resident-18","name":"Nie Zhen","tier":"L1","role":"resident","location":"home-west"},
+    {"id":"resident-19","name":"Ou Yang","tier":"L1","role":"resident","location":"shelter"},
+    {"id":"resident-20","name":"Peng Le","tier":"L1","role":"resident","location":"market"},
+    {"id":"resident-21","name":"Qin Hai","tier":"L1","role":"resident","location":"home-east"},
+    {"id":"resident-22","name":"Ren Jie","tier":"L1","role":"resident","location":"home-west"},
+    {"id":"resident-23","name":"Shi Lan","tier":"L1","role":"resident","location":"shelter"},
+    {"id":"resident-24","name":"Tang Bo","tier":"L1","role":"resident","location":"market"},
+    {"id":"resident-25","name":"Wu Tong","tier":"L0","role":"background","location":"home-east"},
+    {"id":"resident-26","name":"Xie Yi","tier":"L0","role":"background","location":"home-east"},
+    {"id":"resident-27","name":"Yan Fei","tier":"L0","role":"background","location":"home-west"},
+    {"id":"resident-28","name":"Zeng Lu","tier":"L0","role":"background","location":"home-west"},
+    {"id":"resident-29","name":"Bao Ning","tier":"L0","role":"background","location":"market"},
+    {"id":"resident-30","name":"Cai Yun","tier":"L0","role":"background","location":"shelter"}
+  ],
+  "resources": [
+    {"id":"food","unit":"ration","store_available":90},
+    {"id":"water","unit":"litre","store_available":120},
+    {"id":"medicine","unit":"dose","clinic_available":8}
+  ],
+  "capacities": {"clinic_beds":4,"shelter_places":12,"rescue_seats":10},
+  "days": [
+    {"day":1,"event":"illness_detected"},
+    {"day":2,"event":"panic_buying"},
+    {"day":3,"event":"north_gate_lockdown"},
+    {"day":4,"event":"plan_collision"},
+    {"day":5,"event":"food_shipment_stops"},
+    {"day":6,"event":"clinic_shelter_pressure"},
+    {"day":7,"event":"rescue_allocation"}
+  ]
+}

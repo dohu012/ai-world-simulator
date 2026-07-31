@@ -1,0 +1,18 @@
+{
+  "id": "baseline-chen-1",
+  "world_id": "gray-harbor",
+  "owner_id": "chen",
+  "agent_id": "chen",
+  "generation": 1,
+  "traits": {"caution": 0.6, "compassion": 0.2},
+  "values": {"survival": 100, "duty": 70},
+  "protected_values": ["survival"],
+  "desires": ["keep the shelter supplied"],
+  "fears": ["wasting scarce medicine"],
+  "taboos": ["abandoning an injured neighbor"],
+  "persona_summary": "Chen is resource-conscious and deliberate while retaining a duty to neighbors.",
+  "source_references": ["gray-harbor-seven-day:1.0.0"],
+  "created_at": "2026-07-28T00:00:00Z",
+  "content_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "schema_version": "1.0"
+}
