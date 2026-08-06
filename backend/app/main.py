@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.errors import register_exception_handlers
 from app.api.routes.demo_world import router as demo_world_router
@@ -36,6 +37,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         await app.state.database.dispose()
 
     app = FastAPI(title="AI World Simulator API", lifespan=lifespan)
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=app_settings.trusted_hosts)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=app_settings.cors_origins,

@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://simulator:simulator@localhost:5432/simulator"
     redis_url: str = "redis://localhost:6379/0"
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
+    trusted_hosts: list[str] = Field(
+        default_factory=lambda: ["localhost", "127.0.0.1", "test", "testserver", "api"]
+    )
     log_level: str = "INFO"
     model_provider: str = "disabled"
     model_api_key: str | None = None
@@ -30,6 +33,21 @@ class Settings(BaseSettings):
     world_runtime_enabled: bool = False
     study_enrollment_enabled: bool = False
     study_admin_key: str | None = None
+    study_code_pepper: str | None = None
+    study_min_return_hours: int = 24
+    study_rate_limit_attempts: int = 12
+    study_rate_limit_window_seconds: int = 60
+
+    @model_validator(mode="after")
+    def validate_production_study_boundary(self) -> "Settings":
+        if self.app_env == "production" and self.study_enrollment_enabled:
+            if not self.study_admin_key or len(self.study_admin_key) < 32:
+                raise ValueError("production study enrollment requires a 32-byte admin key")
+            if not self.study_code_pepper or len(self.study_code_pepper) < 32:
+                raise ValueError("production study enrollment requires a 32-byte code pepper")
+            if any(not origin.startswith("https://") for origin in self.cors_origins):
+                raise ValueError("production study enrollment requires HTTPS origins")
+        return self
 
 
 @lru_cache

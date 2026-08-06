@@ -27,6 +27,18 @@ class FakeService:
         return SimpleNamespace(id="study-test")
 
 
+class FakeRedis:
+    def __init__(self) -> None:
+        self.values: dict[str, int] = {}
+
+    async def incr(self, key: str) -> int:
+        self.values[key] = self.values.get(key, 0) + 1
+        return self.values[key]
+
+    async def expire(self, _key: str, _seconds: int) -> None:
+        return None
+
+
 @pytest.fixture
 async def playtest_client(monkeypatch: pytest.MonkeyPatch) -> AsyncIterator[AsyncClient]:
     monkeypatch.setattr(product_validation, "service", lambda _request: FakeService())
@@ -69,3 +81,24 @@ async def test_access_errors_are_indistinguishable(playtest_client: AsyncClient)
     )
     assert response.status_code == 404
     assert response.json()["detail"] == "study access is unavailable"
+
+
+async def test_enrollment_rate_limit_uses_neutral_error(
+    playtest_client: AsyncClient,
+) -> None:
+    app = playtest_client._transport.app  # type: ignore[attr-defined]
+    app.state.redis = FakeRedis()
+    app.state.settings.study_rate_limit_attempts = 1
+    app.state.settings.study_rate_limit_window_seconds = 60
+    body = {
+        "access_code": "abcdefghijklmnop",
+        "acknowledgement_codes": ["fiction", "bounded_data", "withdrawal"],
+        "device_class": "desktop",
+    }
+    headers = {"X-CSRF-Token": "playtest-v1"}
+    assert (
+        await playtest_client.post("/playtest/enroll", json=body, headers=headers)
+    ).status_code == 200
+    limited = await playtest_client.post("/playtest/enroll", json=body, headers=headers)
+    assert limited.status_code == 429
+    assert limited.json()["detail"] == "request could not be accepted"

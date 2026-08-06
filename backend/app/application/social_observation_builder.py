@@ -21,7 +21,6 @@ class SocialObservationBuilder(ObservationBuilder):
         sent_at: datetime,
         delivered_at: datetime,
         channel_kind: str,
-        reliability: float,
     ) -> Observation:
         """Create recipient-only input without hidden fact or route identifiers."""
         return Observation(
@@ -44,11 +43,14 @@ class SocialObservationBuilder(ObservationBuilder):
             ],
             felt_changes=[],
             available_actions=[],
+            # A recipient can tell an official bulletin from a courier's word, so
+            # `channel_kind` is perceivable. The channel's numeric reliability is the
+            # world's own truth about how trustworthy that route is; the agent must
+            # infer trust from content and history instead of reading it off input.
             metadata={
                 "builder": "deterministic-v2",
                 "delivery": "message",
                 "channel_kind": channel_kind,
-                "reliability": reliability,
             },
             schema_version="1.0",
         )

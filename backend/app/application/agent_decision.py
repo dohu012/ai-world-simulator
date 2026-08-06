@@ -23,6 +23,7 @@ from app.application.gray_harbor import (
     GrayHarborReadService,
 )
 from app.application.memory_service import MemoryApplicationService, RetrievalRead
+from app.domain.character import AgentProfile, Character
 from app.domain.enums import ActionType
 from app.infrastructure.database import memory_models as mr
 from app.infrastructure.database import models as r
@@ -33,10 +34,127 @@ from app.model_gateway.contracts import (
     ModelRequest,
 )
 from app.repositories.worlds import WorldRepository
+from app.services.demo_world import DemoAgentInputReadModel
 
-PROMPT_VERSION = "gray-harbor-decision-v1"
-INPUT_VERSION = "agent-decision-input-v1"
+PROMPT_VERSION = "gray-harbor-decision-v3"
+# v2 serialized the whole RetrievalRead, including candidates the packer excluded.
+INPUT_VERSION = "agent-decision-input-v2"
 TRANSIENT = {"MODEL_TIMEOUT", "MODEL_RATE_LIMITED", "MODEL_PROVIDER_UNAVAILABLE"}
+
+
+def _format_scalar_map(values: dict[str, float]) -> str:
+    return ", ".join(f"{key}={value:g}" for key, value in sorted(values.items()))
+
+
+def _agent_visible_memory_context(memory_context: RetrievalRead) -> dict[str, object]:
+    """Project the retrieval run down to what the character may actually recall.
+
+    A full RetrievalRead is an audit artifact: it also carries candidates the
+    packer deliberately excluded, plus the ranking scores behind that choice.
+    Serializing it whole would hand the model the very memories the budget
+    dropped, so agent input gets only the selected summaries.
+    """
+    return {
+        "policy_version": memory_context.policy_version,
+        "mode": memory_context.mode,
+        "context_watermark": memory_context.context_watermark,
+        "memories": [
+            {
+                "id": candidate.memory.id,
+                "memory_type": candidate.memory.memory_type,
+                "summary": candidate.memory.summary,
+                "occurred_at": candidate.memory.occurred_at.isoformat(),
+            }
+            for candidate in memory_context.candidates
+            if candidate.selected
+        ],
+    }
+
+
+def build_decision_prompt(
+    input_model: DemoAgentInputReadModel,
+    observation_ids: list[str],
+    watermark: str,
+    memory_context: RetrievalRead,
+    evolution_context: dict[str, object],
+    affordances: object,
+) -> str:
+    """Serialize the single agent-facing input document.
+
+    Everything the model can read passes through here, so this is the one place
+    that decides what an agent may know. It carries only that agent's own
+    perspective: no other character's state, no world-authoring facts, and no
+    visibility classes describing how the information was routed.
+    """
+    safe_input = {
+        "input_version": INPUT_VERSION,
+        "world": input_model.world.model_dump(mode="json"),
+        "character": input_model.character.model_dump(mode="json"),
+        "profile": input_model.agentProfile.model_dump(mode="json"),
+        "observations": [item.model_dump(mode="json") for item in input_model.observations],
+        "observation_ids": observation_ids,
+        "observation_watermark": watermark,
+        "memory_context": _agent_visible_memory_context(memory_context),
+        "evolution_context": evolution_context,
+        "affordances": affordances,
+    }
+    return json.dumps(safe_input, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def build_decision_instructions(
+    character: Character,
+    profile: AgentProfile,
+    memory_context: RetrievalRead,
+    evolution_context: dict[str, object],
+) -> str:
+    """Compose the persona directive delivered alongside the JSON decision input."""
+    intro = f"You are {character.name}"
+    if character.occupation:
+        intro += f", a {character.occupation}"
+    lines = [intro + "."]
+    if character.description:
+        lines.append(character.description)
+    lines.append(f"Persona: {profile.persona_summary}")
+    if profile.traits:
+        lines.append(f"Traits: {_format_scalar_map(profile.traits)}")
+    if profile.values:
+        lines.append(f"Values: {_format_scalar_map(profile.values)}")
+    if profile.decision_biases:
+        lines.append(f"Decision biases: {_format_scalar_map(profile.decision_biases)}")
+    if profile.desires:
+        lines.append("Desires: " + "; ".join(profile.desires))
+    if profile.fears:
+        lines.append("Fears: " + "; ".join(profile.fears))
+    if profile.taboos:
+        lines.append("Taboos you never violate: " + "; ".join(profile.taboos))
+    identity = evolution_context.get("identity")
+    if isinstance(identity, dict):
+        summary = identity.get("persona_summary")
+        if isinstance(summary, str) and summary:
+            lines.append(f"Current sense of self: {summary}")
+    relationships = evolution_context.get("relationships")
+    if isinstance(relationships, list):
+        for item in relationships:
+            if isinstance(item, dict) and item.get("interpretation"):
+                lines.append(
+                    f"Relationship with {item.get('target_type')} {item.get('target_id')}: "
+                    f"{item.get('interpretation')}"
+                )
+    memories = [
+        candidate.memory.summary for candidate in memory_context.candidates if candidate.selected
+    ]
+    if memories:
+        lines.append("Memories that feel relevant right now:")
+        lines.extend(f"- {summary}" for summary in memories)
+    lines.append(
+        "Decide as this character. The input is a JSON document describing the world, "
+        "your observations, and the `affordances` you may take. Choose exactly one entry "
+        "from `affordances`, copy its `id` and `action` verbatim, echo `observation_ids` "
+        "and `observation_watermark` exactly as given, and write `rationale_summary` in "
+        "first person, true to your persona, within 240 characters. "
+        "Output only JSON matching the provided schema."
+    )
+    return "\n".join(lines)
 
 
 class DecisionSubmission(BaseModel):
@@ -89,6 +207,7 @@ class AgentDecisionApplicationService:
         *,
         max_attempts: int = 2,
         timeout_seconds: float = 15.0,
+        max_output_tokens: int = 300,
         lease_seconds: int = 60,
         after_attempt_hook: Callable[[], Awaitable[None]] | None = None,
         after_action_hook: Callable[[], Awaitable[None]] | None = None,
@@ -99,6 +218,7 @@ class AgentDecisionApplicationService:
             timeout_seconds,
             lease_seconds,
         )
+        self.max_output_tokens = max_output_tokens
         self.after_attempt_hook = after_attempt_hook
         self.after_action_hook = after_action_hook
 
@@ -156,24 +276,25 @@ class AgentDecisionApplicationService:
             }
             for target in sorted(edges)
         ]
-        safe_input = {
-            "input_version": INPUT_VERSION,
-            "world": input_model.world.model_dump(mode="json"),
-            "character": input_model.character.model_dump(mode="json"),
-            "profile": input_model.agentProfile.model_dump(mode="json"),
-            "observations": [x.model_dump(mode="json") for x in input_model.observations],
-            "observation_ids": observation_ids,
-            "observation_watermark": watermark,
-            "memory_context": memory_context.model_dump(mode="json"),
-            "evolution_context": evolution_context,
-            "affordances": affordances,
-        }
         schema = AgentDecisionProposal.model_json_schema()
         schema_hash = sha256(
             json.dumps(schema, sort_keys=True, separators=(",", ":")).encode()
         ).hexdigest()
-        prompt = json.dumps(safe_input, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-        prompt_hash = sha256(prompt.encode()).hexdigest()
+        prompt = build_decision_prompt(
+            input_model,
+            observation_ids,
+            watermark,
+            memory_context,
+            evolution_context,
+            affordances,
+        )
+        instructions = build_decision_instructions(
+            input_model.character,
+            input_model.agentProfile,
+            memory_context,
+            evolution_context,
+        )
+        prompt_hash = sha256(f"{instructions}\n{prompt}".encode()).hexdigest()
         now = datetime.now(UTC)
         async with self.sessions() as session:
             await session.execute(
@@ -182,7 +303,11 @@ class AgentDecisionApplicationService:
                     id=PROMPT_VERSION,
                     prompt_hash=prompt_hash,
                     schema_hash=schema_hash,
-                    payload={"input_version": INPUT_VERSION, "output_schema": schema},
+                    payload={
+                        "input_version": INPUT_VERSION,
+                        "output_schema": schema,
+                        "prompt_hash_inputs": ["instructions", "prompt"],
+                    },
                 )
                 .on_conflict_do_nothing(index_elements=["id"])
             )
@@ -206,6 +331,7 @@ class AgentDecisionApplicationService:
                         "decision_id": decision_id,
                         "prompt_version": PROMPT_VERSION,
                         "prompt_hash": prompt_hash,
+                        "instructions": instructions,
                         "schema_version": "1",
                         "schema_hash": schema_hash,
                         "affordances": affordances,
@@ -226,9 +352,10 @@ class AgentDecisionApplicationService:
                 ModelRequest(
                     task="gray_harbor_decide_once",
                     prompt=prompt,
+                    instructions=instructions,
                     output_schema=schema,
                     timeout_seconds=self.timeout_seconds,
-                    max_output_tokens=300,
+                    max_output_tokens=self.max_output_tokens,
                     correlation_id=decision_id,
                 )
             )
@@ -255,7 +382,9 @@ class AgentDecisionApplicationService:
         ):
             failure, proposal = "DECISION_OUTPUT_NOT_ALLOWED", None
         if proposal is not None:
-            _, fresh_watermark = await self._rebuild_prompt(agent_id, {"affordances": affordances})
+            _, fresh_watermark, _ = await self._rebuild_prompt(
+                agent_id, {"affordances": affordances}
+            )
             if fresh_watermark != watermark:
                 failure, proposal = "DECISION_INPUT_STALE", None
 
@@ -318,7 +447,9 @@ class AgentDecisionApplicationService:
             None,
         )
         if completed is None:
-            prompt, current_watermark = await self._rebuild_prompt(agent_id, input_payload)
+            prompt, current_watermark, instructions = await self._rebuild_prompt(
+                agent_id, input_payload
+            )
             if current_watermark != str(input_payload["observation_watermark"]):
                 await self._finalize(
                     existing.id,
@@ -334,9 +465,10 @@ class AgentDecisionApplicationService:
                 ModelRequest(
                     task="gray_harbor_decide_once_recovery",
                     prompt=prompt,
+                    instructions=instructions,
                     output_schema=AgentDecisionProposal.model_json_schema(),
                     timeout_seconds=self.timeout_seconds,
-                    max_output_tokens=300,
+                    max_output_tokens=self.max_output_tokens,
                     correlation_id=existing.id,
                 )
             )
@@ -402,7 +534,7 @@ class AgentDecisionApplicationService:
 
     async def _rebuild_prompt(
         self, agent_id: str, input_payload: dict[str, object]
-    ) -> tuple[str, str]:
+    ) -> tuple[str, str, str]:
         async with self.sessions() as session:
             input_model = await GrayHarborReadService(WorldRepository(session)).agent_input(
                 agent_id
@@ -425,21 +557,22 @@ class AgentDecisionApplicationService:
         watermark = self._input_watermark(
             observation_ids, memory_context.context_watermark, evolution_watermark
         )
-        safe_input = {
-            "input_version": INPUT_VERSION,
-            "world": input_model.world.model_dump(mode="json"),
-            "character": input_model.character.model_dump(mode="json"),
-            "profile": input_model.agentProfile.model_dump(mode="json"),
-            "observations": [item.model_dump(mode="json") for item in input_model.observations],
-            "observation_ids": observation_ids,
-            "observation_watermark": watermark,
-            "memory_context": memory_context.model_dump(mode="json"),
-            "evolution_context": evolution_context,
-            "affordances": input_payload.get("affordances", []),
-        }
         return (
-            json.dumps(safe_input, sort_keys=True, separators=(",", ":"), ensure_ascii=False),
+            build_decision_prompt(
+                input_model,
+                observation_ids,
+                watermark,
+                memory_context,
+                evolution_context,
+                input_payload.get("affordances", []),
+            ),
             watermark,
+            build_decision_instructions(
+                input_model.character,
+                input_model.agentProfile,
+                memory_context,
+                evolution_context,
+            ),
         )
 
     async def _memory_context(

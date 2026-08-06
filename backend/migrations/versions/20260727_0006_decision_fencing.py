@@ -12,12 +12,20 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "agent_decisions",
-        sa.Column("claim_token", sa.Integer(), nullable=False, server_default="1"),
-    )
+    columns = {
+        column["name"] for column in sa.inspect(op.get_bind()).get_columns("agent_decisions")
+    }
+    if "claim_token" not in columns:
+        op.add_column(
+            "agent_decisions",
+            sa.Column("claim_token", sa.Integer(), nullable=False, server_default="1"),
+        )
     op.alter_column("agent_decisions", "claim_token", server_default=None)
 
 
 def downgrade() -> None:
-    op.drop_column("agent_decisions", "claim_token")
+    columns = {
+        column["name"] for column in sa.inspect(op.get_bind()).get_columns("agent_decisions")
+    }
+    if "claim_token" in columns:
+        op.drop_column("agent_decisions", "claim_token")

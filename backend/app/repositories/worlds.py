@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.exc import StaleDataError
 
 from app.application.action_validator import MoveState, ScenarioActionState
 from app.domain.schemas import (
@@ -41,6 +42,30 @@ class ActionLifecycleConflictError(Exception):
 
 class WorldTransactionError(Exception):
     """A database lock/deadlock/serialization failure, never a domain rejection."""
+
+
+class MutationConflictError(Exception):
+    """The authoritative row moved or vanished between validation and write.
+
+    This is a lost optimistic race, not a caller mistake: the same request may
+    succeed on retry, so the lifecycle records a rejection rather than a 5xx.
+    """
+
+    failure_code = "MUTATION_STATE_CONFLICT"
+    failure_reason = "Authoritative state changed before the mutation was written."
+
+
+class MutationRejectedError(Exception):
+    """The objective mutation is impossible against current authoritative state.
+
+    Validation ran against a snapshot; this is the write-time re-check, so the
+    caller gets the same stable failure code an up-front rejection would carry.
+    """
+
+    def __init__(self, failure_code: str, failure_reason: str) -> None:
+        super().__init__(failure_code)
+        self.failure_code = failure_code
+        self.failure_reason = failure_reason
 
 
 class ReplayChain(BaseModel):
@@ -397,8 +422,14 @@ class WorldRepository:
             await self.session.scalar(
                 select(func.set_config("lock_timeout", f"{self.lock_timeout_ms}ms", True))
             )
+            # populate_existing overwrites any copy this session loaded before the
+            # lock (observer reads run first), so validation sees the row as it is
+            # under FOR UPDATE rather than the identity map's pre-lock snapshot.
             world_row = await self.session.scalar(
-                select(r.WorldRecord).where(r.WorldRecord.id == world_id).with_for_update()
+                select(r.WorldRecord)
+                .where(r.WorldRecord.id == world_id)
+                .with_for_update()
+                .execution_options(populate_existing=True)
             )
         except DBAPIError as exc:
             await self.session.rollback()
@@ -406,9 +437,9 @@ class WorldRepository:
         if world_row is None:
             return None
         actor_row = await self.session.scalar(
-            select(r.CharacterRecord).where(
-                r.CharacterRecord.world_id == world_id, r.CharacterRecord.id == actor_id
-            )
+            select(r.CharacterRecord)
+            .where(r.CharacterRecord.world_id == world_id, r.CharacterRecord.id == actor_id)
+            .execution_options(populate_existing=True)
         )
         if actor_row is None:
             return None
@@ -456,7 +487,10 @@ class WorldRepository:
         requirement = resource_requirements.get(affordance_id)
         if requirement is not None:
             account = await self.session.get(
-                sr.ResourceAccountRecord, requirement[0], with_for_update=True
+                sr.ResourceAccountRecord,
+                requirement[0],
+                with_for_update=True,
+                populate_existing=True,
             )
             return ScenarioActionState(
                 available=account.available if account is not None else None,
@@ -468,7 +502,9 @@ class WorldRepository:
             "gh-v1:route-clinic": "plan-zhou-rescue",
         }.get(affordance_id)
         if plan_id is not None:
-            plan = await self.session.get(sr.AgentPlanRecord, plan_id, with_for_update=True)
+            plan = await self.session.get(
+                sr.AgentPlanRecord, plan_id, with_for_update=True, populate_existing=True
+            )
             return ScenarioActionState(plan_status=plan.status if plan is not None else None)
         return ScenarioActionState()
 
@@ -481,17 +517,23 @@ class WorldRepository:
         mutation: MoveMutationPlan | ScenarioMutationPlan | None = None,
     ) -> None:
         """Flush one already adjudicated lifecycle and objective mutation, then commit once."""
-        if isinstance(mutation, MoveMutationPlan):
-            world_row = await self.session.get(r.WorldRecord, mutation.world.id)
-            character_row = await self.session.get(r.CharacterRecord, mutation.character.id)
-            if world_row is None or character_row is None:
-                raise RuntimeError("locked mutation rows disappeared")
-            world_row.version = mutation.world.version
-            world_row.payload = mutation.world.model_dump(mode="json")
-            character_row.version = mutation.character.version
-            character_row.payload = mutation.character.model_dump(mode="json")
-        elif isinstance(mutation, ScenarioMutationPlan):
-            await self._apply_scenario_mutation(intent, mutation)
+        try:
+            if isinstance(mutation, MoveMutationPlan):
+                world_row = await self.session.get(r.WorldRecord, mutation.world.id)
+                character_row = await self.session.get(r.CharacterRecord, mutation.character.id)
+                if world_row is None or character_row is None:
+                    raise MutationConflictError("locked mutation rows disappeared")
+                world_row.version = mutation.world.version
+                world_row.payload = mutation.world.model_dump(mode="json")
+                character_row.version = mutation.character.version
+                character_row.payload = mutation.character.model_dump(mode="json")
+            elif isinstance(mutation, ScenarioMutationPlan):
+                await self._apply_scenario_mutation(intent, mutation)
+        except (MutationConflictError, MutationRejectedError):
+            # Discard the partial mutation so the caller can record a rejected
+            # lifecycle on a clean transaction instead of losing the audit trail.
+            await self.session.rollback()
+            raise
         self.session.add(
             r.ActionIntentRecord(
                 id=intent.id,
@@ -551,6 +593,11 @@ class WorldRepository:
         except IntegrityError as exc:
             await self.session.rollback()
             raise ActionLifecycleConflictError from exc
+        except StaleDataError as exc:
+            # version_id_col matched no row: another writer committed a newer
+            # version after this transaction read it.
+            await self.session.rollback()
+            raise MutationConflictError(str(exc)) from exc
         except DBAPIError as exc:
             await self.session.rollback()
             raise WorldTransactionError("world transaction failed") from exc
@@ -563,10 +610,13 @@ class WorldRepository:
     ) -> None:
         if mutation.plan_id is not None:
             plan = await self.session.get(
-                sr.AgentPlanRecord, mutation.plan_id, with_for_update=True
+                sr.AgentPlanRecord,
+                mutation.plan_id,
+                with_for_update=True,
+                populate_existing=True,
             )
             if plan is None or mutation.plan_status is None:
-                raise RuntimeError("scenario plan mutation target disappeared")
+                raise MutationConflictError("scenario plan mutation target disappeared")
             plan.status = mutation.plan_status
             plan.version += 1
             plan.payload = {**plan.payload, "status": mutation.plan_status, "version": plan.version}
@@ -575,14 +625,19 @@ class WorldRepository:
             raise RuntimeError("resource mutation is missing its resource definition")
         for index, leg in enumerate(mutation.legs):
             account = await self.session.get(
-                sr.ResourceAccountRecord, leg.account_id, with_for_update=True
+                sr.ResourceAccountRecord,
+                leg.account_id,
+                with_for_update=True,
+                populate_existing=True,
             )
             if account is None:
-                raise RuntimeError("scenario resource account disappeared")
+                raise MutationConflictError("scenario resource account disappeared")
             new_available = account.available + leg.delta_available
             new_consumed = account.consumed + leg.delta_consumed
             if new_available < 0 or new_consumed < 0:
-                raise ValueError("RESOURCE_INSUFFICIENT")
+                raise MutationRejectedError(
+                    "RESOURCE_INSUFFICIENT", "The offered resource is no longer sufficient."
+                )
             prior_version = account.version
             account.available = new_available
             account.consumed = new_consumed

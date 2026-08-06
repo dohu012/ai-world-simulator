@@ -21,6 +21,7 @@ from app.infrastructure.database import models as r
 from app.infrastructure.database import runtime_models as rr
 from app.infrastructure.database import seven_day_models as sr
 from app.model_gateway.adapters import ScriptedModelGateway
+from app.model_gateway.contracts import ModelGateway
 from app.repositories.worlds import WorldRepository
 
 CHEN_ID = "char-chen-mo"
@@ -82,8 +83,22 @@ class NotificationRead(BaseModel):
 
 
 class PostgresWorldRuntimeAdapter:
-    def __init__(self, sessions: async_sessionmaker[AsyncSession], *, enabled: bool) -> None:
+    def __init__(
+        self,
+        sessions: async_sessionmaker[AsyncSession],
+        *,
+        enabled: bool,
+        gateway: ModelGateway | None = None,
+        model_max_attempts: int = 2,
+        model_timeout_seconds: float = 15.0,
+        model_max_output_tokens: int = 300,
+    ) -> None:
         self.sessions, self.enabled = sessions, enabled
+        # None keeps tests and local demos on the deterministic scripted gateway.
+        self.gateway: ModelGateway = gateway if gateway is not None else ScriptedModelGateway()
+        self.model_max_attempts = model_max_attempts
+        self.model_timeout_seconds = model_timeout_seconds
+        self.model_max_output_tokens = model_max_output_tokens
 
     def _enabled(self) -> None:
         if not self.enabled:
@@ -605,7 +620,11 @@ class PostgresWorldRuntimeAdapter:
 
     async def _continue(self, request_id: str) -> None:
         decision = await AgentDecisionApplicationService(
-            self.sessions, ScriptedModelGateway()
+            self.sessions,
+            self.gateway,
+            max_attempts=self.model_max_attempts,
+            timeout_seconds=self.model_timeout_seconds,
+            max_output_tokens=self.model_max_output_tokens,
         ).decide(
             CHEN_ID,
             DecisionSubmission(idempotency_key=f"oracle-final-{request_id}"),

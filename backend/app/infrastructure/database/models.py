@@ -29,6 +29,10 @@ class WorldRecord(PayloadMixin, Base):
     status: Mapped[str] = mapped_column(String(32), nullable=False)
     current_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     version: Mapped[int] = mapped_column(Integer, nullable=False)
+    # The application owns the version numbers, so the generator stays False; the
+    # mapper only adds "WHERE version = <loaded value>" to every UPDATE and raises
+    # StaleDataError when a concurrent writer already moved the row forward.
+    __mapper_args__ = {"version_id_col": version, "version_id_generator": False}
 
 
 class CharacterRecord(PayloadMixin, Base):
@@ -39,6 +43,7 @@ class CharacterRecord(PayloadMixin, Base):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     version: Mapped[int] = mapped_column(Integer, nullable=False)
+    __mapper_args__ = {"version_id_col": version, "version_id_generator": False}
 
 
 class LocationRecord(PayloadMixin, Base):

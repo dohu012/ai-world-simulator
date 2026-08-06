@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import hmac
 import json
-from datetime import UTC, datetime
+import secrets
+from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -23,7 +25,9 @@ from app.domain.product_validation import (
     protocol_hash,
 )
 from app.infrastructure.database.product_validation_models import (
+    StudyAccessCodeRecord,
     StudyConsentRecord,
+    StudyDeletionTombstoneRecord,
     StudyDemandProbeRecord,
     StudyParticipantRecord,
     StudyPeriodRecord,
@@ -79,6 +83,10 @@ QUESTION_WORDING: dict[str, tuple[str, str]] = {
 PROBE_TYPES = frozenset(
     {"creation", "promotion", "dialogue", "actions", "return_loop_ux", "delivery"}
 )
+Sequence = Literal["AB", "BA"]
+EpistemicClass = Literal[
+    "objective", "observed", "believed", "correction", "decision", "outcome", "relationship"
+]
 
 
 class EnrollmentResult(BaseModel):
@@ -126,6 +134,10 @@ def _hash(*parts: str) -> str:
     return sha256("\x1f".join(parts).encode("utf-8")).hexdigest()
 
 
+def _code_hash(pepper: str, access_code: str) -> str:
+    return hmac.new(pepper.encode(), access_code.encode(), sha256).hexdigest()
+
+
 def _advisory_key(value: str) -> int:
     key = int(value[:16], 16)
     return key if key < 2**63 else key - 2**64
@@ -146,7 +158,7 @@ def frozen_protocol() -> dict[str, object]:
         "target": 16,
         "minimum": 8,
         "conditions": ["causal", "chronological"],
-        "interval_ids": [item["id"] for item in corpus["intervals"]],  # type: ignore[index]
+        "interval_ids": [item["id"] for item in cast(list[dict[str, object]], corpus["intervals"])],
         "assignment_version": ASSIGNMENT_VERSION,
         "free_text_collected": False,
         "notification_required": False,
@@ -158,8 +170,55 @@ def frozen_protocol() -> dict[str, object]:
 
 
 class ProductValidationService:
-    def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
+    def __init__(
+        self,
+        session_factory: async_sessionmaker[AsyncSession],
+        *,
+        code_pepper: str | None = None,
+        min_return_hours: int = 24,
+    ) -> None:
         self._session_factory = session_factory
+        self._code_pepper = code_pepper
+        self._min_return = timedelta(hours=min_return_hours)
+
+    def _require_pepper(self) -> str:
+        if not self._code_pepper or len(self._code_pepper) < 32:
+            raise ValueError("study access is unavailable")
+        return self._code_pepper
+
+    async def issue_access_code(self, *, ttl_hours: int = 168) -> tuple[str, datetime]:
+        if ttl_hours < 1 or ttl_hours > 720:
+            raise ValueError("access code lifetime is outside the allowed range")
+        raw_code = secrets.token_urlsafe(24)
+        now = datetime.now(UTC)
+        expires_at = now + timedelta(hours=ttl_hours)
+        async with self._session_factory() as session, session.begin():
+            await self.ensure_protocol(session)
+            session.add(
+                StudyAccessCodeRecord(
+                    id=f"code-{uuid4().hex}",
+                    protocol_id=PROTOCOL_ID,
+                    code_hash=_code_hash(self._require_pepper(), raw_code),
+                    hash_version="hmac-sha256-v1",
+                    issued_at=now,
+                    expires_at=expires_at,
+                )
+            )
+        return raw_code, expires_at
+
+    async def revoke_access_code(self, access_code: str) -> None:
+        code_hash = _code_hash(self._require_pepper(), access_code)
+        async with self._session_factory() as session, session.begin():
+            issued = await session.scalar(
+                select(StudyAccessCodeRecord)
+                .where(
+                    StudyAccessCodeRecord.protocol_id == PROTOCOL_ID,
+                    StudyAccessCodeRecord.code_hash == code_hash,
+                )
+                .with_for_update()
+            )
+            if issued:
+                issued.revoked_at = issued.revoked_at or datetime.now(UTC)
 
     async def ensure_protocol(self, session: AsyncSession) -> StudyProtocolRecord:
         existing = await session.get(StudyProtocolRecord, PROTOCOL_ID)
@@ -207,7 +266,7 @@ class ProductValidationService:
             raise ValueError("all consent acknowledgements are required")
         if device_class not in {"desktop", "mobile", "tablet", "assistive", "unknown"}:
             raise ValueError("unsupported device capability class")
-        code_hash = _hash("study-access-v1", access_code)
+        code_hash = _code_hash(self._require_pepper(), access_code)
         frozen = frozen_protocol()
         async with self._session_factory() as session, session.begin():
             # PostgreSQL transaction locks serialize first protocol creation and
@@ -221,6 +280,17 @@ class ProductValidationService:
                 text("SELECT pg_advisory_xact_lock(:key)"),
                 {"key": _advisory_key(code_hash)},
             )
+            issued = await session.scalar(
+                select(StudyAccessCodeRecord)
+                .where(
+                    StudyAccessCodeRecord.protocol_id == PROTOCOL_ID,
+                    StudyAccessCodeRecord.code_hash == code_hash,
+                )
+                .with_for_update()
+            )
+            now = datetime.now(UTC)
+            if not issued or issued.revoked_at or issued.expires_at <= now:
+                raise ValueError("access code is invalid or expired")
             existing = await session.scalar(
                 select(StudyParticipantRecord).where(
                     StudyParticipantRecord.protocol_id == protocol.id,
@@ -232,7 +302,7 @@ class ProductValidationService:
                     raise ValueError("access code is invalid or expired")
                 return EnrollmentResult(
                     participant_id=existing.id,
-                    sequence=existing.sequence,  # type: ignore[arg-type]
+                    sequence=cast(Sequence, existing.sequence),
                     assignment_version=ASSIGNMENT_VERSION,
                     next_period=await self._next_period(session, existing.id),
                 )
@@ -249,6 +319,7 @@ class ProductValidationService:
                 device_class=device_class,
             )
             session.add(participant)
+            issued.activated_at = issued.activated_at or now
             # These deliberately relationship-free records still require an
             # explicit parent flush so PostgreSQL can enforce the FK ordering.
             await session.flush()
@@ -270,8 +341,9 @@ class ProductValidationService:
                     if (sequence == "AB" and period == 1) or (sequence == "BA" and period == 2)
                     else "chronological"
                 )
-                interval = _corpus()["intervals"][period - 1]  # type: ignore[index]
-                source_watermark = self._interval_watermark(interval)  # type: ignore[arg-type]
+                intervals = cast(list[dict[str, object]], _corpus()["intervals"])
+                interval = intervals[period - 1]
+                source_watermark = self._interval_watermark(interval)
                 session.add(
                     StudyPeriodRecord(
                         id=f"period-{uuid4().hex}",
@@ -279,7 +351,7 @@ class ProductValidationService:
                         participant_id=participant_id,
                         period=period,
                         condition=condition,
-                        interval_id=interval["id"],  # type: ignore[index]
+                        interval_id=str(interval["id"]),
                         source_watermark=source_watermark,
                         presentation_hash=_hash(
                             PROTOCOL_VERSION, str(interval["id"]), condition, source_watermark
@@ -298,8 +370,18 @@ class ProductValidationService:
     ) -> StudyParticipantRecord:
         if not access_code:
             raise ValueError("access code is invalid or expired")
-        code_hash = _hash("study-access-v1", access_code)
+        code_hash = _code_hash(self._require_pepper(), access_code)
         async with self._session_factory() as session:
+            issued = await session.scalar(
+                select(StudyAccessCodeRecord).where(
+                    StudyAccessCodeRecord.protocol_id == PROTOCOL_ID,
+                    StudyAccessCodeRecord.code_hash == code_hash,
+                    StudyAccessCodeRecord.revoked_at.is_(None),
+                    StudyAccessCodeRecord.expires_at > datetime.now(UTC),
+                )
+            )
+            if not issued:
+                raise ValueError("access code is invalid or expired")
             participant = await session.scalar(
                 select(StudyParticipantRecord).where(
                     StudyParticipantRecord.protocol_id == PROTOCOL_ID,
@@ -325,7 +407,7 @@ class ProductValidationService:
             ).all()
             return ParticipantState(
                 participant_id=participant.id,
-                sequence=participant.sequence,  # type: ignore[arg-type]
+                sequence=cast(Sequence, participant.sequence),
                 withdrawn=participant.withdrawn_at is not None,
                 periods=[
                     {
@@ -383,17 +465,24 @@ class ProductValidationService:
     async def presentation(self, participant_id: str, period: int) -> Presentation:
         async with self._session_factory() as session:
             record = await self._period(session, participant_id, period)
+            if period == 2:
+                first = await self._period(session, participant_id, 1)
+                if (
+                    first.completed_at is None
+                    or datetime.now(UTC) < first.completed_at + self._min_return
+                ):
+                    raise ValueError("the offline interval is not complete")
             interval = self._interval(record.interval_id)
-            claims = [
+            claims: list[PresentationClaim] = [
                 PresentationClaim(
                     id=str(item["id"]),
                     source_id=str(item["source_id"]),
                     source_hash=str(item["source_hash"]),
-                    epistemic_class=item["epistemic_class"],  # type: ignore[arg-type]
+                    epistemic_class=cast(EpistemicClass, item["epistemic_class"]),
                     text=str(item["text"]),
                     ordinal=index,
                 )
-                for index, item in enumerate(interval["claims"])  # type: ignore[arg-type]
+                for index, item in enumerate(cast(list[dict[str, object]], interval["claims"]))
             ]
             if record.condition == "causal":
                 order = {
@@ -583,6 +672,16 @@ class ProductValidationService:
 
     async def delete_participant(self, participant_id: str) -> None:
         async with self._session_factory() as session, session.begin():
+            participant = await session.get(
+                StudyParticipantRecord, participant_id, with_for_update=True
+            )
+            if participant:
+                await session.merge(
+                    StudyDeletionTombstoneRecord(
+                        code_hash=participant.opaque_code_hash,
+                        deleted_at=datetime.now(UTC),
+                    )
+                )
             await session.execute(
                 delete(StudyParticipantRecord).where(StudyParticipantRecord.id == participant_id)
             )
@@ -631,19 +730,17 @@ class ProductValidationService:
 
     @staticmethod
     def _interval_watermark(interval: dict[str, object]) -> str:
-        claims = interval["claims"]
+        claims = cast(list[dict[str, object]], interval["claims"])
         return _hash(
             PROTOCOL_VERSION,
             str(interval["id"]),
-            *(
-                f"{item['source_id']}:{item['source_hash']}"  # type: ignore[index]
-                for item in claims  # type: ignore[union-attr]
-            ),
+            *(f"{item['source_id']}:{item['source_hash']}" for item in claims),
         )
 
     @staticmethod
     def _interval(interval_id: str) -> dict[str, object]:
-        for interval in _corpus()["intervals"]:  # type: ignore[union-attr]
+        intervals = cast(list[dict[str, object]], _corpus()["intervals"])
+        for interval in intervals:
             if interval["id"] == interval_id:
                 return interval
         raise ValueError("frozen interval is unavailable")

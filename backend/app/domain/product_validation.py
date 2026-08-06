@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from math import comb, sqrt
 from statistics import fmean, median
-from typing import Literal
+from typing import Literal, cast
 
 from pydantic import Field, model_validator
 
@@ -124,7 +124,7 @@ def exact_sign_test_two_sided(differences: list[float]) -> float:
         return 1.0
     positives = sum(value > 0 for value in signs)
     tail = sum(comb(len(signs), k) for k in range(0, min(positives, len(signs) - positives) + 1))
-    return min(1.0, 2 * tail / (2 ** len(signs)))
+    return float(min(1.0, 2 * tail / (2 ** len(signs))))
 
 
 def wilson_interval(
@@ -201,7 +201,7 @@ def analyze(
             row for row in included_rows if row.first_branch == winner and row.probe_completed
         ]
         if winner_count / included >= 0.5 and {row.sequence for row in supporters} == {"AB", "BA"}:
-            decision = winner  # type: ignore[assignment]
+            decision = cast(Branch, winner)
         else:
             reasons.append("no_branch_met_concrete_demand_gate")
     elif not reasons:

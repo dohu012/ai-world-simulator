@@ -523,7 +523,7 @@ decoys. Tests cover stable allocation, exact condition source equality, ambiguou
 safety wording rejection, small-cell suppression, low-sample deferral and
 retention of low ratings. No participant was enrolled or fabricated, so no human
 comprehension, safety, offline-return or demand estimate exists and no TASK-024
-expansion branch is justified. Production migration/browser/accessibility gates
+expansion branch was justified by the TASK-023 human dataset.
 The durable boundary now covers frozen consent and questions, opaque access-code
 hashes, race-safe deterministic AB/BA assignment, two source-fenced periods,
 bounded idempotent responses, append-only corrections, concrete demand probes,
@@ -540,3 +540,54 @@ No participant was enrolled for product evidence or fabricated. Consequently no
 human comprehension, safety, offline-return or demand estimate exists; all
 Stage-2 branches remain deferred. Any later study may operate the frozen protocol
 but may not retroactively change TASK-023's `n=0` result.
+
+## Next Planned Task: TASK-024
+
+TASK-024 is planned as **Production-Safe Pilot Operations, Real Multi-Session
+Evidence, and Expansion Decision**. The 41-page product plan was reread page by
+page on 2026-07-31. Page 3 makes sustained interest in an autonomous character an
+MVP validation target; page 36 places creation/promotion/event tools in Stage 2;
+page 39 says to prove fixed-world characters are worth following before building
+the general editor.
+
+TASK-023 completed the controlled-study system but produced `n=0` included human
+evidence. TASK-024 therefore does not select a Stage-2 feature. It hardens and
+operates the frozen study through a production-safe pilot with TLS, anonymous
+access, secrets, rate limits, backups, deletion reconciliation, privacy-safe
+monitoring, accessibility, recruitment/facilitation, incident response and
+teardown.
+
+Before deployment, TASK-024 requires official/upstream and executable comparison
+of reverse proxies/tunnels, anonymous authentication, secret management,
+dependency/container scanning, PostgreSQL backup/restore, monitoring, browser and
+accessibility tooling, recruitment platforms and independent small-sample
+analysis. Target evidence is at least 16 completed two-period participants;
+fewer than 8 remains directional and automatically defers expansion.
+
+TASK-025 will be exactly one evidence-backed branch—creation, promotion,
+dialogue, actions, return-loop UX/accessibility, delivery—or continued explicit
+deferral. No synthetic participant, click/open metric, facilitator preference,
+product-owner preference or LLM judge may choose the branch.
+## TASK-024 Update (2026-07-31)
+
+Production-pilot staging assets now include ADR-017, research, threat model,
+recruitment/analysis freeze, runbook, Caddy/Compose deployment, pre-issued
+expiring HMAC access codes, database immutability triggers, a real 24-hour
+second-period fence, deletion tombstones and backup reconciliation.
+
+TASK-024 is not complete. No approved public deployment or real participant
+operation occurred; the included human sample is `n=0`. TLS, restore, load,
+manual accessibility, actual cost and teardown evidence are pending. Expansion
+remains explicitly deferred and no TASK-025 feature branch is selected.
+
+On 2026-08-03 the final repository gates passed 230 backend tests (30
+infrastructure skips), Ruff, strict mypy, 37 frontend tests, TypeScript, ESLint, Prettier and
+the Next.js production build. Chrome Playwright plus axe passed with no serious
+or critical finding. PostgreSQL 18.4 backup creation succeeded, but isolated
+restore, deletion reconciliation, fresh migration round trip and a 32-concurrent
+activation test later passed after Docker was restarted. The final fresh
+PostgreSQL 18.4 suite passes 260 tests. Initial npm dependency findings were
+remediated and the full npm audit is clean. Docker Scout reports 1 critical and
+16 high findings in gosu's Go standard library inside the current official
+PostgreSQL image, so public enrollment remains stopped alongside TLS,
+manual-accessibility and real-participant gates.

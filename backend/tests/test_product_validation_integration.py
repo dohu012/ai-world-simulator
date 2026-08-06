@@ -1,9 +1,10 @@
 import asyncio
 import os
-from uuid import uuid4
+from time import perf_counter
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import select, text
+from sqlalchemy.exc import DBAPIError
 
 from app.application.product_validation_service import (
     QUESTION_RULES,
@@ -15,14 +16,17 @@ from app.infrastructure.database.product_validation_models import StudyParticipa
 from app.infrastructure.database.session import Database
 
 pytestmark = pytest.mark.skipif(os.getenv("RUN_INFRA_TESTS") != "1", reason="requires PostgreSQL")
-DATABASE_URL = "postgresql+asyncpg://simulator:simulator@127.0.0.1:5432/simulator"
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://simulator:simulator@127.0.0.1:5432/simulator",
+)
 
 
 @pytest.mark.asyncio
 async def test_durable_correction_withdrawal_and_deletion_flow() -> None:
     database = Database(DATABASE_URL)
-    service = ProductValidationService(database.session_factory)
-    access_code = f"task23-flow-{uuid4().hex}"
+    service = ProductValidationService(database.session_factory, code_pepper="x" * 32)
+    access_code, _ = await service.issue_access_code()
     enrolled = await service.enroll(
         access_code=access_code,
         acknowledgement_codes={"fiction", "bounded_data", "withdrawal"},
@@ -86,8 +90,8 @@ async def test_durable_correction_withdrawal_and_deletion_flow() -> None:
 @pytest.mark.asyncio
 async def test_duplicate_two_worker_enrollment_is_one_assignment() -> None:
     database = Database(DATABASE_URL)
-    service = ProductValidationService(database.session_factory)
-    access_code = f"task23-race-{uuid4().hex}"
+    service = ProductValidationService(database.session_factory, code_pepper="x" * 32)
+    access_code, _ = await service.issue_access_code()
     arguments = {
         "access_code": access_code,
         "acknowledgement_codes": {"fiction", "bounded_data", "withdrawal"},
@@ -99,4 +103,64 @@ async def test_duplicate_two_worker_enrollment_is_one_assignment() -> None:
         assert left.sequence == right.sequence
     finally:
         await service.delete_participant(left.participant_id)
+        await database.dispose()
+
+
+@pytest.mark.asyncio
+async def test_production_code_revocation_interval_and_database_freeze() -> None:
+    database = Database(DATABASE_URL)
+    service = ProductValidationService(database.session_factory, code_pepper="y" * 32)
+    access_code, _ = await service.issue_access_code()
+    enrolled = await service.enroll(
+        access_code=access_code,
+        acknowledgement_codes={"fiction", "bounded_data", "withdrawal"},
+        device_class="unknown",
+    )
+    try:
+        with pytest.raises(ValueError, match="offline interval"):
+            await service.presentation(enrolled.participant_id, 2)
+        async with database.session_factory() as session:
+            with pytest.raises(DBAPIError, match="immutable"):
+                async with session.begin():
+                    await session.execute(
+                        text(
+                            "UPDATE study_questions SET prompt = 'tampered' "
+                            "WHERE protocol_id = :protocol_id"
+                        ),
+                        {"protocol_id": "gray-harbor-product-validation"},
+                    )
+        await service.revoke_access_code(access_code)
+        with pytest.raises(ValueError, match="invalid or expired"):
+            await service.authenticate(access_code)
+    finally:
+        await service.delete_participant(enrolled.participant_id)
+        await database.dispose()
+
+
+@pytest.mark.asyncio
+async def test_32_participant_activation_budget_and_cleanup() -> None:
+    database = Database(DATABASE_URL)
+    service = ProductValidationService(database.session_factory, code_pepper="z" * 32)
+    codes = [
+        code for code, _ in await asyncio.gather(*(service.issue_access_code() for _ in range(32)))
+    ]
+    started = perf_counter()
+    enrolled = await asyncio.gather(
+        *(
+            service.enroll(
+                access_code=code,
+                acknowledgement_codes={"fiction", "bounded_data", "withdrawal"},
+                device_class="unknown",
+            )
+            for code in codes
+        )
+    )
+    elapsed = perf_counter() - started
+    try:
+        assert len({item.participant_id for item in enrolled}) == 32
+        assert elapsed < 10
+    finally:
+        await asyncio.gather(
+            *(service.delete_participant(item.participant_id) for item in enrolled)
+        )
         await database.dispose()

@@ -121,3 +121,57 @@ async def test_openai_adapter_maps_timeout(monkeypatch) -> None:
         api_key="secret", base_url="https://example.test", model="test-model"
     ).complete(request())
     assert outcome.failure_code == "MODEL_TIMEOUT"
+
+
+@pytest.mark.parametrize(
+    "raised",
+    [
+        __import__("ssl").SSLEOFError("EOF occurred in violation of protocol"),
+        __import__("urllib.error", fromlist=["error"]).URLError("connection refused"),
+        ValueError("not json"),
+    ],
+)
+async def test_openai_adapter_maps_network_and_body_failures(monkeypatch, raised) -> None:
+    from app.model_gateway import adapters
+
+    def broken(*_args, **_kwargs):
+        raise raised
+
+    monkeypatch.setattr(adapters.urllib_request, "urlopen", broken)
+    outcome = await adapters.OpenAIResponsesGateway(
+        api_key="secret", base_url="https://example.test", model="test-model"
+    ).complete(request())
+    assert outcome.failure_code == "MODEL_PROVIDER_UNAVAILABLE"
+
+
+async def test_openai_adapter_parses_nested_output_text_from_raw_rest_shape(monkeypatch) -> None:
+    from app.model_gateway import adapters
+
+    proposal = {
+        "action": "wait",
+        "affordance_id": "wait",
+        "rationale_summary": "Wait safely.",
+        "observation_ids": ["obs-1"],
+        "observation_watermark": "a" * 64,
+    }
+    payload = {
+        "id": "resp-1",
+        "object": "response",
+        "model": "test-model",
+        "output": [
+            {
+                "type": "message",
+                "content": [{"type": "output_text", "text": json.dumps(proposal)}],
+            }
+        ],
+        "usage": {"input_tokens": 10, "output_tokens": 20},
+    }
+    monkeypatch.setattr(
+        adapters.urllib_request, "urlopen", lambda *_args, **_kwargs: FakeHTTPResponse(payload)
+    )
+    outcome = await adapters.OpenAIResponsesGateway(
+        api_key="secret", base_url="https://example.test", model="test-model"
+    ).complete(request())
+    assert outcome.failure_code is None
+    assert outcome.output == proposal
+    assert outcome.input_tokens == 10

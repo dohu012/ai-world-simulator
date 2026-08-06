@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
 test("focused playtest is keyboard usable, narrow, calm, and no-push", async ({
   context,
@@ -43,6 +44,13 @@ test("focused playtest is keyboard usable, narrow, calm, and no-push", async ({
   await expect(
     page.getByRole("button", { name: "Withdraw and delete" }),
   ).toBeVisible();
+  const accessibility = await new AxeBuilder({ page }).analyze();
+  expect(
+    accessibility.violations.filter(
+      (violation) =>
+        violation.impact === "serious" || violation.impact === "critical",
+    ),
+  ).toEqual([]);
 
   const permission = await context
     .grantPermissions([])

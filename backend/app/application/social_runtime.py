@@ -231,7 +231,6 @@ class SocialRuntimeService:
             sent_at=message.sent_world_time,
             delivered_at=transmission.arrival_world_time,
             channel_kind=channel.kind,
-            reliability=channel.reliability_milli / 1000,
         )
         if await session.get(db.ObservationRecord, observation_id) is None:
             session.add(

@@ -53,6 +53,30 @@ class StudyParticipantRecord(Base):
     deletion_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class StudyAccessCodeRecord(Base):
+    __tablename__ = "study_access_codes"
+    __table_args__ = (
+        UniqueConstraint("protocol_id", "code_hash", name="uq_study_access_code_hash"),
+        CheckConstraint("hash_version = 'hmac-sha256-v1'", name="ck_study_code_hash_version"),
+    )
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    protocol_id: Mapped[str] = mapped_column(
+        ForeignKey("study_protocols.id", ondelete="RESTRICT"), nullable=False
+    )
+    code_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    hash_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    activated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class StudyDeletionTombstoneRecord(Base):
+    __tablename__ = "study_deletion_tombstones"
+    code_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    deleted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
 class StudyQuestionRecord(Base):
     __tablename__ = "study_questions"
     __table_args__ = (

@@ -54,9 +54,23 @@ class OpenAIResponsesGateway:
 
     async def complete(self, request: ModelRequest) -> ModelOutcome:
         started = monotonic()
+        # text.format enforces the schema server-side on openai.com, but relay
+        # endpoints commonly ignore it — restate the schema in instructions so the
+        # model still emits conforming JSON when enforcement is absent.
+        schema_directive = (
+            "Output a single JSON object conforming to this JSON Schema, with all "
+            "required fields and no markdown fences:\n"
+            + json.dumps(request.output_schema, sort_keys=True, separators=(",", ":"))
+        )
+        instructions = (
+            f"{request.instructions}\n\n{schema_directive}"
+            if request.instructions is not None
+            else schema_directive
+        )
         body = {
             "model": self.model,
             "input": request.prompt,
+            "instructions": instructions,
             "max_output_tokens": request.max_output_tokens,
             "store": False,
             "text": {
@@ -89,6 +103,13 @@ class OpenAIResponsesGateway:
                     )
             except error.HTTPError as exc:
                 return exc.code, {}, exc.headers.get("x-request-id")
+            except OSError:
+                # DNS, TLS, and connection-reset failures never reach HTTP status handling;
+                # map them to a synthetic 599 so they surface as MODEL_PROVIDER_UNAVAILABLE.
+                return 599, {}, None
+            except ValueError:
+                # Non-JSON body (proxy error pages, truncated responses).
+                return 599, {}, None
 
         try:
             status, data, request_id = await asyncio.wait_for(
@@ -111,22 +132,36 @@ class OpenAIResponsesGateway:
         if data.get("status") == "incomplete":
             failure = "MODEL_OUTPUT_INCOMPLETE"
         output_items = data.get("output")
+        output_text = data.get("output_text")
         if isinstance(output_items, list):
+            fragments: list[str] = []
             for item in output_items:
                 if not isinstance(item, dict):
                     continue
                 content_items = item.get("content")
-                if isinstance(content_items, list) and any(
-                    isinstance(content, dict) and content.get("type") == "refusal"
-                    for content in content_items
-                ):
-                    failure = "MODEL_REFUSED"
-                    break
-        output_text = data.get("output_text")
+                if not isinstance(content_items, list):
+                    continue
+                for content in content_items:
+                    if not isinstance(content, dict):
+                        continue
+                    if content.get("type") == "refusal":
+                        failure = "MODEL_REFUSED"
+                    elif content.get("type") == "output_text":
+                        fragments.append(str(content.get("text", "")))
+            # Raw REST responses carry text only inside output[].content[]; the
+            # top-level output_text convenience field is not part of the wire format.
+            if not isinstance(output_text, str) and fragments:
+                output_text = "".join(fragments)
         output = None
         if isinstance(output_text, str):
+            # Some relays skip server-side json_schema enforcement and return the
+            # model's raw text, which is often wrapped in markdown code fences.
+            text = output_text.strip()
+            if text.startswith("```"):
+                text = text.split("\n", 1)[1] if "\n" in text else ""
+                text = text.rsplit("```", 1)[0]
             try:
-                output = json.loads(output_text)
+                output = json.loads(text)
             except json.JSONDecodeError:
                 failure = "MODEL_OUTPUT_INVALID"
         if status < 400 and failure is None and output is None:

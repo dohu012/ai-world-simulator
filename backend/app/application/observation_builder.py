@@ -81,9 +81,13 @@ class ObservationBuilder:
                         received_messages=[],
                         felt_changes=[],
                         available_actions=[],
+                        # An agent can tell whether it witnessed something itself or
+                        # only heard about it, so `delivery` stays. The event's
+                        # visibility class is a world-authoring fact — knowing an
+                        # event was "secret" is knowledge the agent cannot have, so
+                        # it is never mirrored into agent input.
                         metadata={
                             "builder": "deterministic-v1",
-                            "source_visibility": event.visibility.value,
                             "delivery": "indirect" if is_indirect else "participant",
                         },
                         schema_version=event.schema_version,

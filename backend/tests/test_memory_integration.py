@@ -1,3 +1,4 @@
+import json
 import os
 from asyncio import gather
 
@@ -8,6 +9,7 @@ from app.application.memory_service import EmbeddingOutcome, MemoryApplicationSe
 from app.core.config import Settings
 from app.infrastructure.database import evolution_models as er
 from app.infrastructure.database import memory_models as mr
+from app.infrastructure.database import models as r
 from app.infrastructure.database.session import Database
 from app.services.seed_gray_harbor import seed_gray_harbor
 
@@ -36,6 +38,12 @@ async def test_exact_once_admission_two_worker_embedding_and_owner_filter() -> N
     try:
         async with database.session_factory() as session:
             await seed_gray_harbor(session)
+            episodic_fixture = await session.get(r.ObservationRecord, "obs-lin-fever")
+            assert episodic_fixture is not None
+            payload = json.loads(json.dumps(episodic_fixture.payload))
+            payload["visible_entities"][0]["description"] = "clinic medicine plan"
+            episodic_fixture.payload = payload
+            await session.commit()
         await clear_memory(database)
         service = MemoryApplicationService(database.session_factory)
         first = await service.sync_observations()

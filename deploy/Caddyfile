@@ -1,0 +1,32 @@
+{
+	admin off
+	email {$TLS_CONTACT_EMAIL}
+}
+
+{$PILOT_HOST} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), notifications=()"
+	}
+	@admin path /playtest/admin/* /api/playtest/admin/*
+	respond @admin 404
+	handle_path /api/* {
+		reverse_proxy api:8000
+	}
+	@api path /health/live /health/ready
+	reverse_proxy @api api:8000
+	reverse_proxy frontend:3000
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>headers delete
+				request>uri query
+			}
+		}
+	}
+}

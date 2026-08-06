@@ -24,6 +24,7 @@ class ModelRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     task: str
     prompt: str
+    instructions: str | None = None
     output_schema: dict[str, object]
     timeout_seconds: float
     max_output_tokens: int

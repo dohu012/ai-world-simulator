@@ -86,6 +86,31 @@
 
 The earlier local infrastructure blocker is resolved: Docker Desktop, PostgreSQL, and Redis are running healthy; migration `20260726_0003`, idempotent seed, all 9 infrastructure tests, and real accepted/stale/retry smoke scenarios pass. The historical failure note above is retained only as execution history, not a current limitation.
 
+## Audit follow-up (2026-08-06): mutation concurrency and prompt isolation
+
+- `WorldRecord` and `CharacterRecord` now carry `version_id_col` with an
+  app-owned generator, so every UPDATE is guarded by `WHERE version = <loaded>`
+  and a losing writer raises `StaleDataError` instead of silently overwriting.
+  Locked reads pass `populate_existing=True` so validation never sees the
+  identity map's pre-lock snapshot.
+- Write-time mutation failures are now auditable rejections rather than 500s:
+  `MUTATION_STATE_CONFLICT` (state changed between validation and write) and
+  `RESOURCE_INSUFFICIENT` (resource drained between validation and write) are
+  persisted as REJECTED `ActionResult` rows with no event and no mutation.
+- Observation metadata no longer carries `source_visibility`, and message
+  observation metadata no longer carries the channel's numeric `reliability`;
+  both are world-authoring truth an agent has no channel to. `channel_kind`
+  stays because a recipient can tell a bulletin from a courier. The observer
+  `/propagation` API still exposes reliability — that is player-facing.
+- Only `selected` memory candidates reach the assembled prompt. Excluded
+  candidate bodies and all retrieval scores were previously serialized into
+  agent input; `PROMPT_VERSION` is now `gray-harbor-decision-v3` and
+  `INPUT_VERSION` is `agent-decision-input-v2`.
+- Residual gap: the version-guard's end-to-end proof lives in the
+  infrastructure-gated tests (`test_concurrent_stale_moves_mutate_world_exactly_once`)
+  and still needs a running PostgreSQL plus `RUN_INFRA_TESTS=1`. Mapper
+  inspection confirms the guard is configured, but that is not live evidence.
+
 ## TASK-016 residual risks
 
 - Claim leases are persisted and non-terminal same-key calls fail closed with `DECISION_IN_PROGRESS`; automatic expired-lease takeover and crash injection coverage remain follow-up hardening.

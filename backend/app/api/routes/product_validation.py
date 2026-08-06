@@ -1,5 +1,7 @@
 """Privacy-minimized public boundary for the frozen TASK-023 study."""
 
+import hmac
+from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Header, HTTPException, Request, Response
@@ -29,8 +31,39 @@ class ResponseResult(BaseModel):
     response_id: str
 
 
+class AccessCodeIssueInput(BaseModel):
+    ttl_hours: int = Field(default=168, ge=1, le=720)
+
+
+class AccessCodeIssueResult(BaseModel):
+    access_code: str
+    expires_at: datetime
+
+
+class AccessCodeRevokeInput(BaseModel):
+    access_code: str = Field(min_length=16, max_length=128)
+
+
 def service(request: Request) -> ProductValidationService:
-    return ProductValidationService(request.app.state.database.session_factory)
+    settings = request.app.state.settings
+    return ProductValidationService(
+        request.app.state.database.session_factory,
+        code_pepper=settings.study_code_pepper,
+        min_return_hours=settings.study_min_return_hours,
+    )
+
+
+async def enforce_rate_limit(request: Request, bucket: str) -> None:
+    redis = getattr(request.app.state, "redis", None)
+    if redis is None:
+        return
+    settings = request.app.state.settings
+    key = f"study-rate:{bucket}"
+    count = await redis.incr(key)
+    if count == 1:
+        await redis.expire(key, getattr(settings, "study_rate_limit_window_seconds", 60))
+    if count > getattr(settings, "study_rate_limit_attempts", 12):
+        raise HTTPException(status_code=429, detail="request could not be accepted")
 
 
 def no_store(response: Response) -> None:
@@ -52,6 +85,14 @@ def require_csrf(
 async def participant_id(
     request: Request, access_code: str | None, *, include_withdrawn: bool = False
 ) -> str:
+    await enforce_rate_limit(
+        request,
+        hmac.new(
+            (getattr(request.app.state.settings, "study_code_pepper", None) or "disabled").encode(),
+            (access_code or "").encode(),
+            "sha256",
+        ).hexdigest(),
+    )
     try:
         participant = await service(request).authenticate(
             access_code or "", include_withdrawn=include_withdrawn
@@ -76,6 +117,14 @@ async def enroll(
 ) -> EnrollmentResult:
     no_store(response)
     require_csrf(x_csrf_token)
+    await enforce_rate_limit(
+        request,
+        hmac.new(
+            (getattr(request.app.state.settings, "study_code_pepper", None) or "disabled").encode(),
+            body.access_code.encode(),
+            "sha256",
+        ).hexdigest(),
+    )
     if not request.app.state.settings.study_enrollment_enabled:
         raise HTTPException(status_code=503, detail="study enrollment is paused")
     try:
@@ -251,6 +300,38 @@ async def aggregate_report(
 ) -> AggregateState:
     no_store(response)
     configured = request.app.state.settings.study_admin_key
-    if not configured or x_study_admin_key != configured:
+    if not configured or not hmac.compare_digest(x_study_admin_key or "", configured):
         raise HTTPException(status_code=404, detail="study access is unavailable")
     return await service(request).aggregate_state()
+
+
+@router.post("/admin/access-codes", response_model=AccessCodeIssueResult)
+async def issue_access_code(
+    request: Request,
+    response: Response,
+    body: AccessCodeIssueInput,
+    x_study_admin_key: Annotated[str | None, Header(alias="X-Study-Admin-Key")] = None,
+) -> AccessCodeIssueResult:
+    no_store(response)
+    configured = request.app.state.settings.study_admin_key
+    if not configured or not hmac.compare_digest(x_study_admin_key or "", configured):
+        raise HTTPException(status_code=404, detail="study access is unavailable")
+    try:
+        access_code, expires_at = await service(request).issue_access_code(ttl_hours=body.ttl_hours)
+    except ValueError as error:
+        raise HTTPException(status_code=503, detail="study access is unavailable") from error
+    return AccessCodeIssueResult(access_code=access_code, expires_at=expires_at)
+
+
+@router.post("/admin/access-codes/revoke", status_code=204)
+async def revoke_access_code(
+    request: Request,
+    response: Response,
+    body: AccessCodeRevokeInput,
+    x_study_admin_key: Annotated[str | None, Header(alias="X-Study-Admin-Key")] = None,
+) -> None:
+    no_store(response)
+    configured = request.app.state.settings.study_admin_key
+    if not configured or not hmac.compare_digest(x_study_admin_key or "", configured):
+        raise HTTPException(status_code=404, detail="study access is unavailable")
+    await service(request).revoke_access_code(body.access_code)

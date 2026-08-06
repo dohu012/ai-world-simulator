@@ -11,12 +11,7 @@ from app.application.agent_decision import AgentDecisionApplicationService
 from app.application.gray_harbor import GrayHarborReadService
 from app.application.runtime_service import PostgresWorldRuntimeAdapter
 from app.core.config import Settings
-from app.model_gateway.adapters import (
-    DisabledModelGateway,
-    OpenAIResponsesGateway,
-    ScriptedModelGateway,
-)
-from app.model_gateway.contracts import ModelGateway
+from app.model_gateway.factory import build_model_gateway
 from app.repositories.worlds import WorldRepository
 
 
@@ -33,22 +28,12 @@ def get_world_repository(
 
 def get_agent_decision_service(request: Request) -> AgentDecisionApplicationService:
     settings: Settings = request.app.state.settings
-    gateway: ModelGateway
-    if settings.model_provider == "fake":
-        gateway = ScriptedModelGateway()
-    elif settings.model_provider == "openai" and settings.model_api_key:
-        gateway = OpenAIResponsesGateway(
-            api_key=settings.model_api_key,
-            base_url=settings.model_base_url,
-            model=settings.model_id,
-        )
-    else:
-        gateway = DisabledModelGateway()
     return AgentDecisionApplicationService(
         request.app.state.database.session_factory,
-        gateway,
+        build_model_gateway(settings),
         max_attempts=settings.model_max_attempts,
         timeout_seconds=settings.model_timeout_seconds,
+        max_output_tokens=settings.model_max_output_tokens,
     )
 
 
@@ -57,6 +42,10 @@ def get_world_runtime_service(request: Request) -> PostgresWorldRuntimeAdapter:
     return PostgresWorldRuntimeAdapter(
         request.app.state.database.session_factory,
         enabled=settings.world_runtime_enabled,
+        gateway=build_model_gateway(settings),
+        model_max_attempts=settings.model_max_attempts,
+        model_timeout_seconds=settings.model_timeout_seconds,
+        model_max_output_tokens=settings.model_max_output_tokens,
     )
 
 

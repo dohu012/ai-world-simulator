@@ -5,7 +5,7 @@ from hashlib import sha256
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.application.action_validator import ActionValidator, MoveState
+from app.application.action_validator import ActionValidation, ActionValidator, MoveState
 from app.application.gray_harbor import (
     WORLD_ID,
     GrayHarborAgentNotFoundError,
@@ -17,6 +17,8 @@ from app.domain.enums import ActionType
 from app.domain.schemas import ActionIntent, ActionResult, WorldEvent
 from app.repositories.worlds import (
     ActionLifecycleConflictError,
+    MutationConflictError,
+    MutationRejectedError,
     WorldRepository,
     WorldTransactionError,
 )
@@ -124,12 +126,44 @@ class GrayHarborActionService:
             if concurrent is None:
                 raise
             return self._read(concurrent, True)
+        except (MutationConflictError, MutationRejectedError) as exc:
+            # The write-time re-check overruled an accepted validation. Persist the
+            # rejection so the attempt stays auditable instead of vanishing in a 500.
+            return await self._persist_rejection(intent, exc)
         except WorldTransactionError as exc:
             raise ActionTransactionUnavailableError from exc
         return DemoActionLifecycleReadModel(
             intent=intent,
             result=adjudication.result,
             event=adjudication.event,
+            idempotent_replay=False,
+        )
+
+    async def _persist_rejection(
+        self, intent: ActionIntent, cause: MutationConflictError | MutationRejectedError
+    ) -> DemoActionLifecycleReadModel:
+        """Record a mutation-time rejection through the ordinary adjudication path."""
+        rejection = ActionValidation(
+            accepted=False,
+            failure_code=cause.failure_code,
+            failure_reason=cause.failure_reason,
+        )
+        rejected = self.engine.adjudicate(intent, rejection)
+        try:
+            await self.repository.persist_action_lifecycle(
+                intent, rejected.result, rejected.event, [], None
+            )
+        except ActionLifecycleConflictError:
+            concurrent = await self.repository.get_action_lifecycle(intent.id)
+            if concurrent is None:
+                raise
+            return self._read(concurrent, True)
+        except WorldTransactionError as exc:
+            raise ActionTransactionUnavailableError from exc
+        return DemoActionLifecycleReadModel(
+            intent=intent,
+            result=rejected.result,
+            event=rejected.event,
             idempotent_replay=False,
         )
 
